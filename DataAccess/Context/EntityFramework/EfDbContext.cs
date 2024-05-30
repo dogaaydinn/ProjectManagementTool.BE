@@ -126,6 +126,9 @@ public sealed class EfDbContext : EfDbContextBase
         .HasForeignKey(p => p.ManagerId)
         .OnDelete(DeleteBehavior.Cascade);
     
+    modelBuilder.Entity<User>()
+        .Property(u => u.FirstName)
+        .IsRequired();
 
 }
     

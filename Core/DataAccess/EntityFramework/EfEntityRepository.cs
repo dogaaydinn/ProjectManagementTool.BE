@@ -202,4 +202,10 @@ public class EfEntityRepository<TEntity, TContext> : IEntityRepository<TEntity>
         context.UpdateRange(enumerable.ToList());
         await context.SaveChangesAsync();
     }
+
+    public async Task<TEntity?> GetByIdAsync(Guid id)
+    {
+        await using var context = new TContext();
+        return await context.Set<TEntity>().FindAsync(id);
+    }
 }

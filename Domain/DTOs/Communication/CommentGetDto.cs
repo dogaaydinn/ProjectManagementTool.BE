@@ -19,4 +19,5 @@ public class CommentGetDto : IDto
     public User? Author { get; set; }
     public Comment? ReplyTo { get; set; }
     public ICollection<DutyGetDto?> Reporter { get; set; }
+    public List<CommentGetDto> SubComments { get; set; } = new List<CommentGetDto>();
 }

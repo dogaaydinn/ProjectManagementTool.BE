@@ -8,9 +8,9 @@ public static class AuthHelper
 {
     private static readonly IHttpContextAccessor HttpContextAccessor = ServiceTool.GetService<IHttpContextAccessor>()!;
 
-    public static string? GetUserId()
+    public static Guid? GetUserId()
     {
-        return HttpContextAccessor.HttpContext!.GetUserId();
+          return HttpContextAccessor.HttpContext!.GetUserId();
     }
 
     public static string? GetEmail()
@@ -27,5 +27,10 @@ public static class AuthHelper
     public static string? GetRole()
     {
         return HttpContextAccessor.HttpContext!.GetRole();
+    }
+
+    public static bool IsLoggedIn()
+    {
+        return HttpContextAccessor.HttpContext!.User.Identity!.IsAuthenticated;
     }
 }

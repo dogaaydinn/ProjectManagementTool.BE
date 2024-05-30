@@ -3,6 +3,7 @@ using AutoMapper;
 using Business.Constants.Messages.Services.Communication;
 using Business.Services.Auth.Abstract;
 using Business.Services.Communication.Abstract;
+using Core.Constants;
 using Core.ExceptionHandling;
 using Core.Security.SessionManagement;
 using Core.Services.Messages;
@@ -24,7 +25,7 @@ public class AuthManager: IAuthService
     private readonly ITokenHandler _tokenHandler = ServiceTool.GetService<ITokenHandler>()!;
     private readonly IMapper _mapper = ServiceTool.GetService<IMapper>()!;
     private readonly IMailingService _emailService = ServiceTool.GetService<IMailingService>()!;
-
+    
     
     //It checks if the LoginDto object is not null and if the email is valid.
     // It retrieves the user from the database using the provided email or username.
@@ -34,7 +35,7 @@ public class AuthManager: IAuthService
     // If MFA is not enabled or after the MFA code is verified, it generates a token for the user, updates the user's active token in the database, and returns a success result with the token and user information.
     
     #region login
-    public async Task<ServiceObjectResult<LoginResponseDto?>> LoginAsync(LoginDto loginDto)
+public async Task<ServiceObjectResult<LoginResponseDto?>> LoginAsync (LoginDto loginDto)
     {
         var result = new ServiceObjectResult<LoginResponseDto?>();
 
@@ -46,7 +47,7 @@ public class AuthManager: IAuthService
                     ("AUTH-584337", BusinessRules.CheckEmail(loginDto.Email)));
 
             var user = await _userDal.GetAsync(
-                u => u.Email == loginDto.Email || u.Username == loginDto.Username);
+                u => u.Email == loginDto.Email || u.Username == loginDto.Username); 
 
             if (user == null)
             {
@@ -118,50 +119,39 @@ public class AuthManager: IAuthService
     // It sets the token and the UserGetDto object to a LoginResponseDto object and returns a success result with this data.
 
     #region register
-    public async Task<ServiceObjectResult<LoginResponseDto?>> RegisterAsync(RegisterDto registerDto)
+    public async Task<ServiceObjectResult<bool>> RegisterAsync(RegisterDto registerDto)
     {
-        var result = new ServiceObjectResult<LoginResponseDto?>();
+        var result = new ServiceObjectResult<bool>();
 
         try
         {
-            var user = _mapper.Map<User>(registerDto);
-            var isUserExist = await _userDal.GetAsync(x => x.Username == user.Username || x.Email == user.Email);
+            BusinessRules.Run(
+                ("AUTH-310832", BusinessRules.CheckDtoNull(registerDto)),
+                ("AUTH-906899", BusinessRules.CheckEmail(registerDto.Email)),
+                ("AUTH-712957", await CheckIfEmailRegisteredBefore(registerDto.Email)),
+                ("AUTH-770711", await CheckIfUsernameRegisteredBefore(registerDto.Username))
+            );
 
-            if (isUserExist != null)
-            {
-                result.Fail(new ErrorMessage("AUTH-432894", "User already exists"));
-                return result;
-            }
-            
-            HashingHelper.CreatePasswordHash(registerDto.Password, out var passwordHash, out var passwordSalt);
+            HashingHelper.CreatePasswordHash(registerDto.Password, out var passwordHash,
+                out var passwordSalt);
+
+            var user = _mapper.Map<User>(registerDto);
+
             user.PasswordHash = passwordHash;
             user.PasswordSalt = passwordSalt;
-            user.Role = "User";
-            user.CreatedAt = DateTime.Now;
-            user.CreatedUserId = Guid.Empty;
-            user.IsDeleted = false;
-            
+
             await _userDal.AddAsync(user);
-            var token = _tokenHandler.GenerateToken(user.Id.ToString(), user.Username, user.Email, user.Role, false);
-            var userGetDto = _mapper.Map<UserGetDto>(user);
-            
-            var loginResponseDto = new LoginResponseDto
-            {
-                Token = token,
-                User = userGetDto
-            };
-            
-            result.SetData(loginResponseDto);
+            result.SetData(true, AuthServiceMessages.RegisterSuccessful);
         }
-        catch (ValidationException e)
+        catch (ValidationException ex)
         {
-            result.Fail(e);
+            result.Fail(new ErrorMessage(ex.ExceptionCode, ex.Message));
         }
-        catch (Exception e)
+        catch (Exception ex)
         {
-            result.Fail(new ErrorMessage("AUTH-943056", e.Message));
+            result.Fail(new ErrorMessage("AUTH-976141", ex.Message));
         }
-        
+
         return result;
     }
     #endregion
@@ -226,57 +216,6 @@ public class AuthManager: IAuthService
     }
     #endregion
     
-    //method is used when a user has already received a verification code (possibly from the VerifyEmailAsync method) and is entering it to verify their email.
-    //This method checks if the entered code matches the one stored in the database and if the code has not expired.
-    
-    #region verify-email-code
-    public async Task<ServiceObjectResult<LoginResponseDto?>> VerifyEmailCodeAsync(VerifyEmailCodeDto verifyCodeDto)
-    {
-        var result = new ServiceObjectResult<LoginResponseDto?>();
-        try
-        {
-            var user = await _userDal.GetAsync(p => p.Email == verifyCodeDto.Email);
-            if (user == null)
-            {
-                result.Fail(new ErrorMessage("AUTH-808079", AuthServiceMessages.NotFound));
-                return result;
-            }
-
-            if (user.LoginVerificationCode != verifyCodeDto.Code)
-            {
-                result.Fail(new ErrorMessage("AUTH-755666", AuthServiceMessages.WrongVerificationCode));
-                return result;
-            }
-
-            if (user.LoginVerificationCodeExpiration < DateTime.UtcNow)
-            {
-                result.Fail(new ErrorMessage("AUTH-221332", AuthServiceMessages.VerificationCodeExpired));
-                return result;
-            }
-
-            user.LoginVerificationCode = null;
-            user.LoginVerificationCodeExpiration = null;
-
-            await _userDal.UpdateAsync(user);
-
-            var token = _tokenHandler.GenerateToken(user.Id.ToString(), user.Username, user.Email, user.Role, false);
-
-            var userGetDto = _mapper.Map<UserGetDto>(user);
-            result.SetData(new LoginResponseDto { Token = token!, User = userGetDto },
-                AuthServiceMessages.VerificationSuccessful);
-        }
-        catch (ValidationException ex)
-        {
-            result.Fail(new ErrorMessage(ex.ExceptionCode, ex.Message));
-        }
-        catch (Exception ex)
-        {
-            result.Fail(new ErrorMessage("AUTH-562594", ex.Message));
-        }
-
-        return result;
-    }
-    #endregion
 
     //It retrieves the user from the database using the email provided in the verifyMfaCodeDto object.
     // If no user with the provided email is found, it returns a failure result with an error message.
@@ -284,8 +223,6 @@ public class AuthManager: IAuthService
     // It checks if the MFA code has expired. If the code has expired, it returns a failure result with an error message.
     // If the MFA code is valid and has not expired, it clears the MFA code and its expiration date from the user's record in the database.
     // It generates a token for the user.
-    // It maps the User object to a UserGetDto object.
-    // It sets the token and the UserGetDto object to a LoginResponseDto object and returns a success result with this data.
 
     #region verify-mfa
 
@@ -382,6 +319,9 @@ public class AuthManager: IAuthService
         
         return result;
     }
+
+
+
     #endregion
     
 
@@ -389,34 +329,27 @@ public class AuthManager: IAuthService
 //This method generates a new verification code, sends it to the user's email, and waits for the user to enter the code to verify their email.
 
     #region logout
-    public async Task<ServiceObjectResult<bool>> LogoutAsync(LogoutDto logoutDto)
+    public async Task<ServiceObjectResult<bool>> Logout(Guid userId)
     {
         var result = new ServiceObjectResult<bool>();
-
         try
         {
-            var user = await _userDal.GetAsync(x => x.ActiveToken == logoutDto.Token);
-
-            if (user == null)
-            {
-                result.Fail(new ErrorMessage("AUTH-432894", "User not found"));
-                return result;
-            }
+            var user = await _userDal.GetAsync(p => p.Id.Equals(userId));
+            BusinessRules.Run(("AUTH-808079", BusinessRules.CheckEntityNull(user)));
             
-            user.ActiveToken = null;
+            user!.ActiveToken = null;
             await _userDal.UpdateAsync(user);
-            
-            result.SetData(true);
+            result.SetData(true, AuthServiceMessages.LogoutSuccessful);
         }
-        catch (ValidationException e)
+        catch (ValidationException ex)
         {
-            result.Fail(e);
+            result.Fail(new ErrorMessage(ex.ExceptionCode, ex.Message));
         }
-        catch (Exception e)
+        catch (Exception ex)
         {
-            result.Fail(new ErrorMessage("AUTH-943056", e.Message));
+            result.Fail(new ErrorMessage("AUTH-800477", ex.Message));
         }
-        
+
         return result;
     }
     #endregion

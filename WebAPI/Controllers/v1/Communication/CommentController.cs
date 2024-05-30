@@ -1,3 +1,4 @@
+using AutoMapper;
 using Business.Services.Communication.Abstract;
 using Core.Api.Abstract;
 using Core.Utils.IoC;
@@ -10,6 +11,7 @@ public class CommentController : BaseController
 {
     private readonly ICommentService _commentService = ServiceTool.GetService<ICommentService>()!;
     
+    private readonly IMapper _mapper = ServiceTool.GetService<IMapper>()!;
     #region GetAll
     [HttpGet]
     public async Task<IActionResult> GetAll()
@@ -63,11 +65,10 @@ public class CommentController : BaseController
     #endregion
 
     #region ReplyTo
-    [HttpGet("replyTo/{replyToId:guid}")]
-    public async Task<IActionResult> GetByReplyToId(Guid replyToId)
+      [HttpGet("{replyToId}")]
+    public async Task<IActionResult> GetCommentsByReplyToId(Guid replyToId)
     {
         var result = await _commentService.GetByReplyToIdAsync(replyToId);
-        
         if (result.HasFailed) 
             return BadRequest();
         
@@ -89,7 +90,7 @@ public class CommentController : BaseController
     #endregion
 
     #region Create
-    [HttpPost] // Important: All fields should be set in the request body
+    [HttpPost]
     public async Task<IActionResult> Create([FromBody] CommentCreateDto commentCreateDto)
     {
         var result = await _commentService.CreateAsync(commentCreateDto);

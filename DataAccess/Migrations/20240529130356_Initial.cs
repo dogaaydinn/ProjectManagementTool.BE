@@ -46,6 +46,12 @@ namespace DataAccess.Migrations
                     Id = table.Column<Guid>(type: "char(36)", nullable: false, collation: "ascii_general_ci"),
                     Username = table.Column<string>(type: "varchar(127)", maxLength: 127, nullable: false)
                         .Annotation("MySql:CharSet", "utf8mb4"),
+                    FirstName = table.Column<string>(type: "varchar(127)", maxLength: 127, nullable: false)
+                        .Annotation("MySql:CharSet", "utf8mb4"),
+                    LastName = table.Column<string>(type: "varchar(127)", maxLength: 127, nullable: false)
+                        .Annotation("MySql:CharSet", "utf8mb4"),
+                    ProfilePicture = table.Column<string>(type: "varchar(127)", maxLength: 127, nullable: true)
+                        .Annotation("MySql:CharSet", "utf8mb4"),
                     Email = table.Column<string>(type: "varchar(127)", maxLength: 127, nullable: false)
                         .Annotation("MySql:CharSet", "utf8mb4"),
                     PasswordHash = table.Column<byte[]>(type: "longblob", nullable: false),

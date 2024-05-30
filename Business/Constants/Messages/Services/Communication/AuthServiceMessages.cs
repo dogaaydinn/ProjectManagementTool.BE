@@ -19,4 +19,5 @@ internal static class AuthServiceMessages
     public static string? LoginVerificationMailNotSent { get; set; }
     public static string? ResetPasswordMailNotSent { get; set; }
     public static string? PasswordResetSuccessful { get; set; }
+    public static string UserNotFound { get; set; }
 }

@@ -8,6 +8,9 @@ namespace Domain.Entities.DutyManagement.UserManagement;
 public class User : EntityBase
 {
     [StringLength(127)] public string Username { get; set; }
+    [StringLength(127)] public string FirstName { get; set; }
+    [StringLength(127)] public string LastName { get; set; }
+    [StringLength(127)] public string? ProfilePicture { get; set; }
     [StringLength(127)] public string Email { get; set; }
     public byte[] PasswordHash { get; set; } = null!;
     public byte[] PasswordSalt { get; set; } = null!;

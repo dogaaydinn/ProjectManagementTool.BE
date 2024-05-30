@@ -1,11 +1,14 @@
 using AutoMapper;
+using Business.Constants.Messages.Services.DutyManagement;
 using Business.Services.DutyManagement.Abstract;
 using Core.ExceptionHandling;
 using Core.Services.Messages;
 using Core.Services.Result;
 using Core.Utils.Hashing;
 using Core.Utils.IoC;
+using Core.Utils.Rules;
 using DataAccess.Repositories.Abstract.UserManagement;
+using Domain.DTOs.Auth;
 using Domain.DTOs.DutyManagement.UserManagement;
 using Domain.Entities.DutyManagement.UserManagement;
 
@@ -155,6 +158,51 @@ public class UserManager : IUserService
         catch (Exception e)
         {
             result.Fail(new ErrorMessage("USMN-238457", e.Message));
+        }
+
+        return result;
+    }
+    #endregion
+
+    #region ResetPassword
+    public async Task<ServiceObjectResult<UserGetDto?>> ResetPasswordAsync(ResetPasswordDto resetPasswordDto)
+    {
+        var result = new ServiceObjectResult<UserGetDto?>();
+
+        try
+        {
+            BusinessRules.Run(
+                ("USER-342385", BusinessRules.CheckDtoNull(resetPasswordDto)),
+                ("USER-128747",
+                    resetPasswordDto.NewPassword.Equals(resetPasswordDto.ConfirmPassword)
+                        ? null
+                        : UserServiceMessages.PasswordsNotMatch));
+
+            var user = await _userDal.GetAsync(b =>resetPasswordDto.Id.Equals(b.Id));
+            BusinessRules.Run(("USER-500620", BusinessRules.CheckEntityNull(user)));
+
+            var passwordCheck = HashingHelper.VerifyPasswordHash(resetPasswordDto.CurrentPassword,
+                user!.PasswordHash,
+                user.PasswordSalt);
+
+            BusinessRules.Run(("USER-569667", passwordCheck ? null : UserServiceMessages.IncorrectPassword));
+
+            HashingHelper.CreatePasswordHash(resetPasswordDto.NewPassword, out var passwordHash,
+                out var passwordSalt);
+
+            user!.PasswordHash = passwordHash;
+            user.PasswordSalt = passwordSalt;
+
+            var userGetDto = _mapper.Map<UserGetDto>(user);
+            result.SetData(userGetDto, UserServiceMessages.PasswordChanged);
+        }
+        catch (ValidationException e)
+        {
+            result.Fail(e);
+        }
+        catch (Exception e)
+        {
+            result.Fail(new ErrorMessage("USER-841618", e.Message));
         }
 
         return result;

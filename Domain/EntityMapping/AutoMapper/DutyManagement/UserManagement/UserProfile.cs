@@ -1,4 +1,5 @@
 using AutoMapper;
+using Domain.DTOs.Auth;
 using Domain.DTOs.DutyManagement.UserManagement;
 using Domain.Entities.DutyManagement.UserManagement;
 
@@ -12,6 +13,9 @@ public class UserProfile : Profile
         CreateMap<UserGetDto, User>();
         
         CreateMap<UserCreateDto, User>();
+        CreateMap<User, UserCreateDto>();
+
+        CreateMap<RegisterDto, User>();
         
         CreateMap<UserUpdateDto, User>()
             .ForAllMembers(opts => opts.Condition((src, dest, srcMember, destMember, context) =>

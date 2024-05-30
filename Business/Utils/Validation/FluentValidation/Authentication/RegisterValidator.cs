@@ -31,6 +31,7 @@ public class RegisterValidator : AbstractValidator<RegisterDto>
         #endregion Required
 
         # region Optional
+        
         # endregion Optional
     }
     

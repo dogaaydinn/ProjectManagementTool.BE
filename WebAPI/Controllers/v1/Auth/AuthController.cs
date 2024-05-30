@@ -2,10 +2,12 @@ using Business.Services.Auth.Abstract;
 using Core.Api.Abstract;
 using Core.Utils.IoC;
 using Domain.DTOs.Auth;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace WebAPI.Controllers.v1.Auth;
 
+[ApiController]
 public class AuthController: BaseController
 {
     private readonly IAuthService _authService = ServiceTool.GetService<IAuthService>()!;
@@ -14,12 +16,20 @@ public class AuthController: BaseController
     [HttpPost("login")]
     public async Task<IActionResult> Login([FromBody] LoginDto loginDto)
     {
+        if (!ModelState.IsValid)
+            return BadRequest(ModelState);
+
         var result = await _authService.LoginAsync(loginDto);
-        
-        if (result.HasFailed) 
-            return BadRequest();
-        
-        return Ok(result);
+
+        if (result.HasFailed)
+            return BadRequest(result);
+
+        if (!result.ExtraData.Any())
+            return Ok(result);
+
+        return result.ExtraData.Any(extraData => extraData.Key == "useMFA" && (bool)extraData.Value!)
+            ? StatusCode(428, result) // 428 Precondition Required
+            : Ok(result);
     }
     #endregion
     
@@ -27,24 +37,14 @@ public class AuthController: BaseController
     [HttpPost("register")]
     public async Task<IActionResult> Register([FromBody] RegisterDto registerDto)
     {
-        var result = await _authService.RegisterAsync(registerDto);
-        
-        if (result.HasFailed) 
-            return BadRequest();
-        
-        return Ok(result);
-    }
-    #endregion
+        if (!ModelState.IsValid)
+            return BadRequest(ModelState);
 
-    #region verify-code
-    [HttpPost("verify-code")]
-    public async Task<IActionResult> VerifyEmailCode([FromBody] VerifyEmailCodeDto verifyEmailCodeDto)
-    {
-        var result = await _authService.VerifyEmailCodeAsync(verifyEmailCodeDto);
-        
-        if (result.HasFailed) 
-            return BadRequest();
-        
+        var result = await _authService.RegisterAsync(registerDto);
+
+        if (result.HasFailed)
+            return BadRequest(result);
+
         return Ok(result);
     }
     #endregion
@@ -53,10 +53,13 @@ public class AuthController: BaseController
     [HttpPost("verify-mfa")]
     public async Task<IActionResult> VerifyMfa([FromBody] VerifyMfaCodeDto verifyMfaCodeDto)
     {
+        if (!ModelState.IsValid)
+            return BadRequest(ModelState);
+        
         var result = await _authService.VerifyMfaCodeAsync(verifyMfaCodeDto);
         
         if (result.HasFailed) 
-            return BadRequest();
+            return BadRequest(result);
         
         return Ok(result);
     }
@@ -66,37 +69,28 @@ public class AuthController: BaseController
     [HttpPost("forgot-password")]
     public async Task<IActionResult> ForgotPassword([FromBody] ForgotPasswordDto forgotPasswordDto)
     {
+        if (!ModelState.IsValid)
+            return BadRequest(ModelState);
+        
         var result = await _authService.ForgotPasswordAsync(forgotPasswordDto);
         
         if (result.HasFailed) 
-            return BadRequest();
+            return BadRequest(result);
         
         return Ok(result);
     }
     #endregion
     
-    #region reset-password
-    [HttpPost("reset-password")]
-    public async Task<IActionResult> ResetPassword([FromBody] ResetPasswordDto resetPasswordDto)
-    {
-        var result = await _authService.ResetPasswordAsync(resetPasswordDto);
-        
-        if (result.HasFailed) 
-            return BadRequest();
-        
-        return Ok(result);
-    }
-    #endregion
-
     #region logout
     [HttpPost("logout")]
-    public async Task<IActionResult> Logout([FromBody] LogoutDto logoutDto)
+    [Authorize]
+    public async Task<IActionResult> Logout(Guid userId)
     {
-        var result = await _authService.LogoutAsync(logoutDto);
-        
-        if (result.HasFailed) 
-            return BadRequest();
-        
+        var result = await _authService.Logout(userId);
+
+        if (result.HasFailed)
+            return BadRequest(result);
+
         return Ok(result);
     }
     #endregion

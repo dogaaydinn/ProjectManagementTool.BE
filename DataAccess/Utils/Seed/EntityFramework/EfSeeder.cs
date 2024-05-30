@@ -41,6 +41,8 @@ public class EfSeeder : ISeeder
         {
             Id = Guid.Empty,
             Username = "manager",
+            FirstName = "manager",
+            LastName = "manager",
             PhoneNumber = "05452977501",
             UseMultiFactorAuthentication = false,
             Email = "doga.aydin@arena.com.tr",
@@ -60,6 +62,8 @@ public class EfSeeder : ISeeder
         var adar = new User
         {
             Username = "adar",
+            FirstName = "adar",
+            LastName = "sönmez",
             PhoneNumber = "05452977503",
             UseMultiFactorAuthentication = false,
             Email = "adar@testmail.com",
@@ -73,6 +77,8 @@ public class EfSeeder : ISeeder
         var arda = new User
         {
             Username = "arda",
+            FirstName = "arda",
+            LastName = "turan",
             PhoneNumber = "05452977502",
             UseMultiFactorAuthentication = false,
             Email = "arda@testmail.com",
@@ -86,6 +92,8 @@ public class EfSeeder : ISeeder
         var onur = new User
         {
             Username = "onur",
+            FirstName = "onur",
+            LastName = "kılınc",
             PhoneNumber = "05452977504",
             UseMultiFactorAuthentication = false,
             Email = "onur@testmail.com",
@@ -99,6 +107,8 @@ public class EfSeeder : ISeeder
         var doga = new User
         {
             Username = "doga",
+            FirstName = "doga",
+            LastName = "aydin",
             PhoneNumber = "05452977505",
             UseMultiFactorAuthentication = false,
             Email = "doga@testmail.com",
@@ -112,6 +122,8 @@ public class EfSeeder : ISeeder
         var tugba = new User
         {
             Username = "emre",
+            FirstName = "emre",
+            LastName = "yilmaz",
             PhoneNumber = "05452977506",
             UseMultiFactorAuthentication = false,
             Email = "emre@testmail.com",
@@ -124,7 +136,9 @@ public class EfSeeder : ISeeder
         HashingHelper.CreatePasswordHash("Barıs123456789.", out passwordHash, out passwordSalt);
         var barıs = new User
         {
-            Username = "barıs",
+            Username = "baris",
+            FirstName = "baris",
+            LastName = "yilmaz",
             PhoneNumber = "05452977507",
             UseMultiFactorAuthentication = false,
             Email = "barıs@testmail.com",
@@ -138,6 +152,8 @@ public class EfSeeder : ISeeder
         var mesut = new User
         {
             Username = "mesut",
+            FirstName = "mesut",
+            LastName = "ada",
             PhoneNumber = "05452977508",
             UseMultiFactorAuthentication = false,
             Email = "mesut@testmail.com",
@@ -151,6 +167,8 @@ public class EfSeeder : ISeeder
         var fatih = new User
         {
             Username = "fatih",
+            FirstName = "fatih",
+            LastName = "acar",
             PhoneNumber = "05452977509",
             UseMultiFactorAuthentication = false,
             Email = "fatih@testmail.com",
@@ -164,6 +182,8 @@ public class EfSeeder : ISeeder
         var elif = new User
         {
             Username = "elif",
+            FirstName = "elif",
+            LastName = "turan",
             PhoneNumber = "05452977510",
             UseMultiFactorAuthentication = false,
             Email = "elif@testmail.com",
@@ -177,6 +197,8 @@ public class EfSeeder : ISeeder
         var emre = new User
         {
             Username = "emre",
+            FirstName = "emre",
+            LastName = "san",
             PhoneNumber = "05452977511",
             UseMultiFactorAuthentication = false,
             Email = "emre@testmail.com",
@@ -190,6 +212,8 @@ public class EfSeeder : ISeeder
         var yusuf = new User
         {
             Username = "yusuf",
+            FirstName = "yusuf",
+            LastName = "ege",
             PhoneNumber = "05452977512",
             UseMultiFactorAuthentication = false,
             Email = "yusuf@testmail.com",
@@ -203,6 +227,8 @@ public class EfSeeder : ISeeder
         var aslı = new User
         {
             Username = "aslı",
+            FirstName = "aslı",
+            LastName = "kaya",
             PhoneNumber = "05452977513",
             UseMultiFactorAuthentication = false,
             Email = "aslı@testmail.com",
@@ -216,6 +242,8 @@ public class EfSeeder : ISeeder
         var mehmet = new User
         {
             Username = "mehmet",
+            FirstName = "mehmet",
+            LastName = "kara",
             PhoneNumber = "05452977514",
             UseMultiFactorAuthentication = false,
             Email = "mehmet@testmail.com",
@@ -229,6 +257,8 @@ public class EfSeeder : ISeeder
         var ali = new User
         {
             Username = "ali",
+            FirstName = "ali",
+            LastName = "aydin",
             PhoneNumber = "05452977515",
             UseMultiFactorAuthentication = false,
             Email = "ali@testmail.com",
@@ -242,6 +272,8 @@ public class EfSeeder : ISeeder
         var ufuk = new User
         {
             Username = "ufuk",
+            FirstName = "ufuk",
+            LastName = "demir",
             PhoneNumber = "05452977516",
             UseMultiFactorAuthentication = false,
             Email = "ufuk@testmail.com",
@@ -255,6 +287,8 @@ public class EfSeeder : ISeeder
         var ahmet = new User
         {
             Username = "ahmet",
+            FirstName = "ahmet",
+            LastName = "ay",
             PhoneNumber = "05452977517",
             UseMultiFactorAuthentication = false,
             Email = "ahmet@testmail.com",
@@ -268,6 +302,8 @@ public class EfSeeder : ISeeder
         var selim = new User
         {
             Username = "selim",
+            FirstName = "selim",
+            LastName = "kaya",
             PhoneNumber = "05452977518",
             UseMultiFactorAuthentication = false,
             Email = "selim@testmail.com",
@@ -281,6 +317,8 @@ public class EfSeeder : ISeeder
         var yasin = new User
         {
             Username = "yasin",
+            FirstName = "yasin",
+            LastName = "ozel",
             PhoneNumber = "05452977519",
             UseMultiFactorAuthentication = false,
             Email = "yasin@testmail.com",
@@ -294,6 +332,8 @@ public class EfSeeder : ISeeder
         var burak = new User
         {
             Username = "burak",
+            FirstName = "burak",
+            LastName = "tas",
             PhoneNumber = "05452977520",
             UseMultiFactorAuthentication = false,
             Email = "burak@testmail.com",
@@ -307,6 +347,8 @@ public class EfSeeder : ISeeder
         var cem = new User
         {
             Username = "cem",
+            FirstName = "cem",
+            LastName = "yılmaz",
             PhoneNumber = "05452977521",
             UseMultiFactorAuthentication = false,
             Email = "cem@testmail.com",
@@ -320,6 +362,8 @@ public class EfSeeder : ISeeder
         var deniz = new User
         {
             Username = "deniz",
+            FirstName = "deniz",
+            LastName = "akkaya",
             PhoneNumber = "05452977522",
             UseMultiFactorAuthentication = false,
             Email = "deniz@testmail.com",
@@ -329,8 +373,8 @@ public class EfSeeder : ISeeder
             PasswordHash = passwordHash,
             PasswordSalt =passwordSalt
         };
-
-        context.Users.AddRange(arda, adar, onur, doga, tugba, barıs, mesut, fatih, elif, emre, yusuf, aslı, mehmet, ali, ufuk, ahmet, selim, yasin, burak, cem, deniz);
+        
+        context.Users.AddRange(adar, arda, onur, doga, tugba, barıs, mesut, fatih, elif, emre, yusuf, aslı, mehmet, ali, ufuk, ahmet, selim, yasin, burak, cem, deniz);
         context.SaveChanges();
 
         #endregion

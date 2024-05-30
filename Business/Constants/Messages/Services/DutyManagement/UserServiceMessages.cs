@@ -13,4 +13,8 @@ internal class UserServiceMessages
     internal const string Deleted = "Deleted";
     internal const string EmailAlreadyExists = "Email already exists";
     internal const string UsernameAlreadyExists = "Username already exists";
+    internal const string PasswordChanged = "Password changed successfully.";
+    internal const string PasswordReset = "Password reset successfully.";
+    internal const string PasswordsNotMatch = "Passwords do not match.";
+    internal const string IncorrectPassword = "Incorrect password.";
 }

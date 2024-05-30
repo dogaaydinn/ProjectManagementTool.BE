@@ -10,8 +10,8 @@ public interface ICommentService : IService
     Task<ServiceObjectResult<CommentGetDto?>> GetByIdAsync(Guid id);
     Task<ServiceCollectionResult<CommentGetDto?>> GetByDutyIdAsync(Guid dutyId);
     Task<ServiceCollectionResult<CommentGetDto?>> GetByAuthorIdAsync(Guid authorId);
-    Task<ServiceCollectionResult<CommentGetDto?>> GetByReplyToIdAsync(Guid replyToId);
     Task<ServiceObjectResult<CommentGetDto?>> UpdateAsync(CommentUpdateDto commentUpdateDto);
-    Task<ServiceObjectResult<CommentGetDto>> CreateAsync(CommentCreateDto commentCreateDto);
+    Task<ServiceCollectionResult<CommentGetDto?>> GetByReplyToIdAsync(Guid replyToId);
     Task<ServiceObjectResult<CommentGetDto?>> DeleteByIdAsync(Guid id);
+    Task<ServiceObjectResult<CommentGetDto?>> CreateAsync(CommentCreateDto commentCreateDto);
 }

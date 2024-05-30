@@ -12,6 +12,7 @@ public interface IUserService : IService
     Task<ServiceObjectResult<UserGetDto?>> GetByUsernameAsync(string username);
     Task<ServiceObjectResult<UserGetDto?>> GetByEmailAsync(string email);
     Task<ServiceObjectResult<UserGetDto?>> GetByPhoneNumberAsync(string phoneNumber);
+    Task<ServiceObjectResult<UserGetDto?>> ResetPasswordAsync(ResetPasswordDto resetPasswordDto);
     Task<ServiceObjectResult<UserGetDto?>> UpdateAsync(UserUpdateDto projectUpdateDto);
     Task<ServiceObjectResult<UserGetDto>> CreateAsync(UserCreateDto userCreateDto);
     Task<ServiceObjectResult<UserGetDto?>> DeleteByIdAsync(Guid id);

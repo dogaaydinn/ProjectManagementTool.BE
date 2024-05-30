@@ -11,7 +11,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace DataAccess.Migrations
 {
     [DbContext(typeof(EfDbContext))]
-    [Migration("20240527091912_Initial")]
+    [Migration("20240529130356_Initial")]
     partial class Initial
     {
         /// <inheritdoc />
@@ -345,11 +345,21 @@ namespace DataAccess.Migrations
                     b.Property<bool>("EmailVerified")
                         .HasColumnType("tinyint(1)");
 
+                    b.Property<string>("FirstName")
+                        .IsRequired()
+                        .HasMaxLength(127)
+                        .HasColumnType("varchar(127)");
+
                     b.Property<bool>("IsDeleted")
                         .HasColumnType("tinyint(1)");
 
                     b.Property<DateTime>("LastLoginTime")
                         .HasColumnType("datetime(6)");
+
+                    b.Property<string>("LastName")
+                        .IsRequired()
+                        .HasMaxLength(127)
+                        .HasColumnType("varchar(127)");
 
                     b.Property<string>("LoginVerificationCode")
                         .HasMaxLength(6)
@@ -373,6 +383,10 @@ namespace DataAccess.Migrations
 
                     b.Property<bool>("PhoneNumberVerified")
                         .HasColumnType("tinyint(1)");
+
+                    b.Property<string>("ProfilePicture")
+                        .HasMaxLength(127)
+                        .HasColumnType("varchar(127)");
 
                     b.Property<string>("ResetPasswordCode")
                         .HasColumnType("longtext");

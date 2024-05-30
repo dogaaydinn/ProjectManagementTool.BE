@@ -1,11 +1,14 @@
 using Business.Services.DutyManagement.Abstract;
 using Core.Api.Abstract;
 using Core.Utils.IoC;
+using Domain.DTOs.Auth;
 using Domain.DTOs.DutyManagement.UserManagement;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace WebAPI.Controllers.v1.DutyManagement.UserManagement;
-
+[ApiController]
+[Authorize]
 public class UserController : BaseController
 {
     private readonly IUserService _userService = ServiceTool.GetService<IUserService>()!;
@@ -86,6 +89,21 @@ public class UserController : BaseController
             return BadRequest();
         
         return Ok(result);
+    }
+    #endregion
+
+    #region ResetPassword
+    [HttpPost("change-password")]
+    public async Task<IActionResult> ResetPasswordAsync([FromBody] ResetPasswordDto resetPasswordDto)
+    {
+        if (!ModelState.IsValid)
+            return BadRequest(ModelState);
+
+        var result = await _userService.ResetPasswordAsync(resetPasswordDto);
+
+        return result.HasFailed
+            ? BadRequest(result)
+            : Ok(result);
     }
     #endregion
     

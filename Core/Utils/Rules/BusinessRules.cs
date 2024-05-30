@@ -87,11 +87,5 @@ public class BusinessRules
 
         return currentUserUsername != username ? ServiceResultConstants.UsernameIsNotSameWithCurrentUser : null;
     }
-
-    public static string? CheckIdSameWithCurrentUser(string id)
-    {
-        var currentUserId = AuthHelper.GetUserId();
-
-        return currentUserId != id ? ServiceResultConstants.IdIsNotSameWithCurrentUser : null;
-    }
+    
 }

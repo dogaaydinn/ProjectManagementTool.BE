@@ -6,6 +6,6 @@ namespace Domain.DTOs.Auth;
 
 public class LoginResponseDto: IDto
 {
-    public UserGetDto User { get; set; }
-    public Token? Token { get; set; }
+    public UserGetDto User { get; set; } = null!;
+    public Token? Token { get; set; } = null!;
 }

@@ -124,8 +124,8 @@ public class CommentManager : ICommentService
         try
         {
             var comments = await _commentDal.GetAllAsync(x => x.ReplyToId == replyToId && x.IsDeleted == false);
-            var commentDto = _mapper.Map<List<CommentGetDto>>(comments);
-            result.SetData(commentDto);
+            var commentDtos = _mapper.Map<List<CommentGetDto>>(comments);
+            result.SetData(commentDtos);
         }
         catch (ValidationException e)
         {
@@ -145,12 +145,14 @@ public class CommentManager : ICommentService
     {
         var result = new ServiceObjectResult<CommentGetDto?>();
 
+        // Check if the commentUpdateDto is null
         if (commentUpdateDto == null)
         {
             result.Fail(new ErrorMessage("Comment-875922", "CommentUpdateDto is null"));
             return result;
         }
 
+        // Check if _commentDal or _mapper are null
         if (_commentDal == null || _mapper == null)
         {
             result.Fail(new ErrorMessage("Comment-875922", "_commentDal or _mapper is null"));
@@ -159,17 +161,26 @@ public class CommentManager : ICommentService
 
         try
         {
+            // Retrieve the existing comment
             var comment = await _commentDal.GetAsync(u => u.Id == commentUpdateDto.Id && u.IsDeleted == false);
 
+            // Check if the comment exists
             if (comment == null)
             {
                 result.Fail(new ErrorMessage("Comment-875922", "Comment not found"));
                 return result;
             }
 
-            comment = _mapper.Map(commentUpdateDto, comment);
+            // Map the updated properties from commentUpdateDto to the existing comment
+            _mapper.Map(commentUpdateDto, comment);
+
+            // Update the comment in the database
             await _commentDal.UpdateAsync(comment);
+
+            // Map the updated comment to CommentGetDto
             var commentDto = _mapper.Map<CommentGetDto>(comment);
+
+            // Set the data and return the result
             result.SetData(commentDto);
         }
         catch (ValidationException e)
@@ -186,13 +197,26 @@ public class CommentManager : ICommentService
     #endregion
 
     #region Create
-    public async Task<ServiceObjectResult<CommentGetDto>> CreateAsync(CommentCreateDto commentCreateDto)
+    public async Task<ServiceObjectResult<CommentGetDto?>> CreateAsync(CommentCreateDto commentCreateDto)
     {
-        var result = new ServiceObjectResult<CommentGetDto>();
+        var result = new ServiceObjectResult<CommentGetDto?>();
 
         try
         {
             var comment = _mapper.Map<Comment>(commentCreateDto);
+
+            // Check if the comment is a reply to another comment
+            if (commentCreateDto.ReplyToId.HasValue)
+            {
+                // Ensure the parent comment exists
+                var parentComment = await _commentDal.GetByIdAsync(commentCreateDto.ReplyToId.Value);
+                if (parentComment == null)
+                {
+                    result.Fail(new ErrorMessage("Comment-404", "The parent comment does not exist."));
+                    return result;
+                }
+            }
+
             await _commentDal.AddAsync(comment);
             result.SetData(_mapper.Map<CommentGetDto>(comment));
         }
