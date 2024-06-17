@@ -21,20 +21,21 @@ public class BusinessModule : IDependencyInjectionModule
 
         services.AddScoped<IMailingService, MailingManager>();
         services.AddScoped<ICommentService, CommentManager>();
+
         # endregion Communication
-        
+
         # region DutyManagement
+
         services.AddScoped<IDutyService, DutyManager>();
         services.AddScoped<IUserService, UserManager>();
-        services.AddScoped<ILabelService, LabelManager>();
-        
+
         # endregion DutyManagement
-        
+
         # region ProjectManagement
-        
+
         services.AddScoped<IProjectService, ProjectManager>();
         services.AddScoped<ITeamService, TeamManager>();
-        
+
         # endregion ProjectManagement
 
         #region Auth
@@ -42,7 +43,7 @@ public class BusinessModule : IDependencyInjectionModule
         services.AddScoped<IAuthService, AuthManager>();
 
         #endregion
-        
+
         # region FluentValidation
 
         services.AddFluentValidationAutoValidation();

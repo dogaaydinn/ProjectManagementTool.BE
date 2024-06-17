@@ -14,19 +14,13 @@ public class CommentProfile : Profile
         CreateMap<CommentCreateDto, Comment>();
         CreateMap<Comment, CommentCreateDto>();
         CreateMap<Comment, CommentGetDto>()
-            
             .ForMember(dest => dest.SubComments, opt => opt.MapFrom(src => src.SubComments));
         CreateMap<CommentUpdateDto, Comment>()
-            
             .ForAllMembers(opts => opts.Condition((src, dest, srcMember, destMember, context) =>
             {
                 if (opts.DestinationMember.Name == "DutyId" || opts.DestinationMember.Name == "ReplyToId")
-                {
                     if (srcMember is Guid guid)
-                    {
                         return guid != Guid.Empty;
-                    }
-                }
                 return srcMember != null;
             }));
     }

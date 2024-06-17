@@ -22,7 +22,7 @@ public class EfEntityRepository<TEntity, TContext> : IEntityRepository<TEntity>
         if (include != null) query = include(query);
 
         if (orderBy != null) query = orderBy(query);
-        
+
         return await query.ToListAsync();
     }
 

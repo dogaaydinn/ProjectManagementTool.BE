@@ -10,19 +10,16 @@ public class ProjectProfile : Profile
     {
         CreateMap<Project, ProjectGetDto>();
         CreateMap<ProjectGetDto, Project>();
-        
+
         // soldakini sağdakine dönüştür
         CreateMap<ProjectCreateDto, Project>();
-        
+
         CreateMap<ProjectUpdateDto, Project>()
             .ForAllMembers(opts => opts.Condition((src, dest, srcMember, destMember, context) =>
             {
-                if (opts.DestinationMember.Name == "ManagerId" && srcMember is Guid guid)
-                {
-                    return guid != Guid.Empty;
-                }
-                
+                if (opts.DestinationMember.Name == "ManagerId" && srcMember is Guid guid) return guid != Guid.Empty;
+
                 return srcMember != null;
             }));
-  }
+    }
 }

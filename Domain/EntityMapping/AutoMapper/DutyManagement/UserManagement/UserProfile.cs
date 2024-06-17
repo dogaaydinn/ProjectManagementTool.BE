@@ -11,20 +11,17 @@ public class UserProfile : Profile
     {
         CreateMap<User, UserGetDto>();
         CreateMap<UserGetDto, User>();
-        
+
         CreateMap<UserCreateDto, User>();
         CreateMap<User, UserCreateDto>();
 
         CreateMap<RegisterDto, User>();
-        
+
         CreateMap<UserUpdateDto, User>()
             .ForAllMembers(opts => opts.Condition((src, dest, srcMember, destMember, context) =>
             {
-                if (opts.DestinationMember.Name == "RoleId" && srcMember is Guid guid)
-                {
-                    return guid != Guid.Empty;
-                }
-                
+                if (opts.DestinationMember.Name == "RoleId" && srcMember is Guid guid) return guid != Guid.Empty;
+
                 return srcMember != null;
             }));
     }

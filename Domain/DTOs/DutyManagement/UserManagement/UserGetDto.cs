@@ -5,7 +5,7 @@ namespace Domain.DTOs.DutyManagement.UserManagement;
 
 public class UserGetDto : IDto
 {
-    public Guid Id { get; set; } 
+    public Guid Id { get; set; }
     [StringLength(127)] public string Username { get; set; } = null!;
     [StringLength(127)] public string Email { get; set; } = null!;
     [StringLength(127)] public string Role { get; set; } = null!;
@@ -13,7 +13,7 @@ public class UserGetDto : IDto
     public string? FirstName { get; set; }
     public string? LastName { get; set; }
     public string? ProfilePhoto { get; set; }
-    public bool UseMultiFactorAuthentication { get; set; } 
+    public bool UseMultiFactorAuthentication { get; set; }
     public DateTime CreatedAt { get; set; } = DateTime.Now;
     public bool EmailVerified { get; set; }
     public bool PhoneNumberVerified { get; set; }

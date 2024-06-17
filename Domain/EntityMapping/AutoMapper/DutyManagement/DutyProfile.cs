@@ -10,11 +10,10 @@ public class DutyProfile : Profile
     {
         CreateMap<Duty, DutyGetDto>();
         CreateMap<DutyGetDto, Duty>();
-        
+
         CreateMap<DutyCreateDto, Duty>();
-        
+
         CreateMap<DutyUpdateDto, Duty>()
             .ForAllMembers(opts => opts.Condition((src, dest, srcMember, destMember, context) => srcMember != null));
     }
-    
 }

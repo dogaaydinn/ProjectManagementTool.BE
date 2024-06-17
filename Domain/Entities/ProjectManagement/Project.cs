@@ -17,6 +17,7 @@ public class Project : EntityBase
     public Priority Priority { get; set; } // Consider using a constant enum for priorities
     public Guid ManagerId { get; set; } // Foreign key referencing User.Id
     public User Manager { get; set; } // The project's manager
+    public virtual ICollection<User> Users { get; set; } = new List<User>();
     public virtual ICollection<Team>? TeamsThatCanAccess { get; set; } // The teams that can access the project
     public virtual ICollection<Duty>? Duties { get; set; } // The project's tasks
 }

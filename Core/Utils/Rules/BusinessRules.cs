@@ -87,5 +87,19 @@ public class BusinessRules
 
         return currentUserUsername != username ? ServiceResultConstants.UsernameIsNotSameWithCurrentUser : null;
     }
-    
+
+    public static string? CheckCollectionNullOrEmpty<T>(ICollection<T> collection, string customError)
+    {
+        return collection == null || !collection.Any() ? customError : null;
+    }
+
+    public static string? CheckUserLoggedIn()
+    {
+        return !AuthHelper.IsLoggedIn() ? "User is not logged in" : null;
+    }
+
+    public static string? CheckProjectAccess(Guid projectId)
+    {
+        return AuthHelper.HasProjectAccess(projectId) ? null : "User does not have access to this project";
+    }
 }

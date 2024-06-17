@@ -17,6 +17,11 @@ public class ServiceCollectionResult<T> : ServiceResult
 
     [JsonProperty] public int? NextPage { get; private set; }
 
+    public void SetError(string prjm, string noProjectsFound)
+    {
+        throw new NotImplementedException();
+    }
+
     # region Set Data Overloads
 
     public void SetData(IEnumerable<T> data, int page = 1, int pageSize = int.MaxValue, string? successMessage = null)

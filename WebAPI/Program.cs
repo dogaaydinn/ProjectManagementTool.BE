@@ -1,5 +1,6 @@
 using System.Text;
 using Business.DependencyResolvers;
+using Core.Constants;
 using Core.DependencyResolvers;
 using Core.Extensions;
 using Core.Utils.DI.Abstract;
@@ -66,8 +67,12 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             ClockSkew = TimeSpan.Zero
         };
     });
-
 builder.Services.AddAuthorization();
+
+builder.Services.AddAuthorizationBuilder()
+    .AddPolicy(AuthPolicies.AdminOnly, policy => policy.RequireRole(UserRoles.Admin))
+    .AddPolicy(AuthPolicies.UserOnly, policy => policy.RequireRole(UserRoles.User))
+    .AddPolicy(AuthPolicies.AllowAll, policy => policy.RequireAssertion(_ => true));
 
 builder.Configuration
     .SetBasePath(env.ContentRootPath)

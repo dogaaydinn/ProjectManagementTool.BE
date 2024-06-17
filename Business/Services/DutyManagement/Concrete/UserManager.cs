@@ -1,16 +1,16 @@
 using AutoMapper;
 using Business.Constants.Messages.Services.DutyManagement;
 using Business.Services.DutyManagement.Abstract;
+using Core.Constants;
 using Core.ExceptionHandling;
 using Core.Services.Messages;
 using Core.Services.Result;
+using Core.Utils.Auth;
 using Core.Utils.Hashing;
 using Core.Utils.IoC;
 using Core.Utils.Rules;
 using DataAccess.Repositories.Abstract.UserManagement;
-using Domain.DTOs.Auth;
 using Domain.DTOs.DutyManagement.UserManagement;
-using Domain.Entities.DutyManagement.UserManagement;
 
 namespace Business.Services.DutyManagement.Concrete;
 
@@ -20,6 +20,7 @@ public class UserManager : IUserService
     private readonly IUserDal _userDal = ServiceTool.GetService<IUserDal>()!;
 
     #region GetAll
+
     public async Task<ServiceCollectionResult<UserGetDto?>> GetAllAsync()
     {
         var result = new ServiceCollectionResult<UserGetDto?>();
@@ -28,7 +29,7 @@ public class UserManager : IUserService
         {
             var users = await _userDal.GetAllAsync(x => x.IsDeleted == false);
             var userDtos = _mapper.Map<List<UserGetDto>>(users);
-            result.SetData(userDtos); 
+            result.SetData(userDtos);
         }
         catch (ValidationException e)
         {
@@ -41,9 +42,11 @@ public class UserManager : IUserService
 
         return result;
     }
+
     #endregion
 
     #region GetById
+
     public async Task<ServiceObjectResult<UserGetDto?>> GetByIdAsync(Guid id)
     {
         var result = new ServiceObjectResult<UserGetDto?>();
@@ -64,11 +67,12 @@ public class UserManager : IUserService
         }
 
         return result;
-        
     }
+
     #endregion
 
     #region GetByRole
+
     public async Task<ServiceCollectionResult<UserGetDto?>> GetByRoleAsync(string role)
     {
         var result = new ServiceCollectionResult<UserGetDto?>();
@@ -90,9 +94,11 @@ public class UserManager : IUserService
 
         return result;
     }
+
     #endregion
 
     #region GetByUsername
+
     public async Task<ServiceObjectResult<UserGetDto?>> GetByUsernameAsync(string username)
     {
         var result = new ServiceObjectResult<UserGetDto?>();
@@ -114,9 +120,11 @@ public class UserManager : IUserService
 
         return result;
     }
+
     #endregion
 
     #region GetByEmail
+
     public async Task<ServiceObjectResult<UserGetDto?>> GetByEmailAsync(string email)
     {
         var result = new ServiceObjectResult<UserGetDto?>();
@@ -138,9 +146,11 @@ public class UserManager : IUserService
 
         return result;
     }
+
     #endregion
 
     #region GetByPhoneNumber
+
     public async Task<ServiceObjectResult<UserGetDto?>> GetByPhoneNumberAsync(string phone)
     {
         var result = new ServiceObjectResult<UserGetDto?>();
@@ -162,32 +172,41 @@ public class UserManager : IUserService
 
         return result;
     }
+
     #endregion
 
-    #region ResetPassword
-    public async Task<ServiceObjectResult<UserGetDto?>> ResetPasswordAsync(ResetPasswordDto resetPasswordDto)
+    #region ChangePassword
+
+    public async Task<ServiceObjectResult<UserGetDto?>> ChangePasswordAsync(ChangePasswordDto changePasswordDto)
     {
         var result = new ServiceObjectResult<UserGetDto?>();
 
         try
         {
+            // Only allow the user themselves to reset their password
+            if (AuthHelper.GetUserId() != changePasswordDto.Id && !AuthHelper.GetRole()!.Equals(UserRoles.Admin))
+            {
+                result.Fail(new ErrorMessage("USER-841618", "Unauthorized access"));
+                return result;
+            }
+
             BusinessRules.Run(
-                ("USER-342385", BusinessRules.CheckDtoNull(resetPasswordDto)),
+                ("USER-342385", BusinessRules.CheckDtoNull(changePasswordDto)),
                 ("USER-128747",
-                    resetPasswordDto.NewPassword.Equals(resetPasswordDto.ConfirmPassword)
+                    changePasswordDto.NewPassword.Equals(changePasswordDto.ConfirmPassword)
                         ? null
                         : UserServiceMessages.PasswordsNotMatch));
 
-            var user = await _userDal.GetAsync(b =>resetPasswordDto.Id.Equals(b.Id));
+            var user = await _userDal.GetAsync(b => changePasswordDto.Id.Equals(b.Id));
             BusinessRules.Run(("USER-500620", BusinessRules.CheckEntityNull(user)));
 
-            var passwordCheck = HashingHelper.VerifyPasswordHash(resetPasswordDto.CurrentPassword,
+            var passwordCheck = HashingHelper.VerifyPasswordHash(changePasswordDto.CurrentPassword,
                 user!.PasswordHash,
                 user.PasswordSalt);
 
             BusinessRules.Run(("USER-569667", passwordCheck ? null : UserServiceMessages.IncorrectPassword));
 
-            HashingHelper.CreatePasswordHash(resetPasswordDto.NewPassword, out var passwordHash,
+            HashingHelper.CreatePasswordHash(changePasswordDto.NewPassword, out var passwordHash,
                 out var passwordSalt);
 
             user!.PasswordHash = passwordHash;
@@ -207,15 +226,23 @@ public class UserManager : IUserService
 
         return result;
     }
+
     #endregion
 
     #region Update
+
     public async Task<ServiceObjectResult<UserGetDto?>> UpdateAsync(UserUpdateDto userUpdateDto)
     {
         var result = new ServiceObjectResult<UserGetDto?>();
 
         try
         {
+            if (AuthHelper.GetUserId() != userUpdateDto.Id && !AuthHelper.GetRole()!.Equals(UserRoles.Admin))
+            {
+                result.Fail(new ErrorMessage("USER-452175", "Unauthorized access"));
+                return result;
+            }
+
             var user = await _userDal.GetAsync(u => u.Id == userUpdateDto.Id && u.IsDeleted == false);
 
             if (user == null)
@@ -240,57 +267,33 @@ public class UserManager : IUserService
 
         return result;
     }
+
     #endregion
 
-    #region Create
-    public async Task<ServiceObjectResult<UserGetDto>> CreateAsync(UserCreateDto userCreateDto)
-    {
-        var result = new ServiceObjectResult<UserGetDto>();
+    #region Delete
 
-        try{
-            byte[] passwordHash, passwordSalt;
-        
-            HashingHelper.CreatePasswordHash(userCreateDto.Password, out passwordHash, out passwordSalt);
-            var user = _mapper.Map<User>(userCreateDto);
-            
-            user.PasswordHash = passwordHash;
-            user.PasswordSalt = passwordSalt;
-            
-            await _userDal.AddAsync(user); // kullanıcı oluştu
-            var userDto = _mapper.Map<UserGetDto>(user);
-            result.SetData(userDto);
-        }
-        catch (ValidationException e)
-        {
-            result.Fail(e);
-        }
-        catch (Exception e)
-        {
-            result.Fail(new ErrorMessage("USMN-456789", e.Message));
-        }
-
-        return result;
-    }
-    #endregion
-
-    #region DeleteById
     public async Task<ServiceObjectResult<UserGetDto?>> DeleteByIdAsync(Guid id)
     {
         var result = new ServiceObjectResult<UserGetDto?>();
 
         try
         {
+            if (AuthHelper.GetUserId() != id && !AuthHelper.GetRole()!.Equals(UserRoles.Admin))
+            {
+                result.Fail(new ErrorMessage("USER-841618", "Unauthorized access"));
+                return result;
+            }
+
             var user = await _userDal.GetAsync(u => u.Id == id && u.IsDeleted == false);
 
             if (user == null)
             {
-                result.Fail(new ErrorMessage("USMN-238754", "User not found"));
+                result.Fail(new ErrorMessage("USMN-238975", "User not found"));
                 return result;
             }
 
-            await _userDal.SoftDeleteAsync(user);
-            var userDto = _mapper.Map<UserGetDto>(user);
-            result.SetData(userDto);
+            user.IsDeleted = true;
+            await _userDal.UpdateAsync(user);
         }
         catch (ValidationException e)
         {
@@ -298,10 +301,11 @@ public class UserManager : IUserService
         }
         catch (Exception e)
         {
-            result.Fail(new ErrorMessage("USMN-972394", e.Message));
+            result.Fail(new ErrorMessage("USMN-238975", e.Message));
         }
 
         return result;
     }
+
     #endregion
 }

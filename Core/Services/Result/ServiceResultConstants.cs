@@ -8,4 +8,5 @@ internal static class ServiceResultConstants
     internal const string UsernameIsNotSameWithCurrentUser = "Username is not same with current user!";
     internal const string IdIsNotSameWithCurrentUser = "Id is not same with current user!";
     internal const string EmailIsNotSameWithCurrentUser = "Email is not same with current user!";
+    internal const string UserIsNotLoggedIn = "User is not logged in!";
 }

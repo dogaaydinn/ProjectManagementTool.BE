@@ -27,17 +27,15 @@ public class EfSeeder : ISeeder
             context.Database.Migrate();
 
         // If there is no data in the database, then seed the database
-        if (context.Duties.Any()) 
+        if (context.Duties.Any())
             return;
-
-        
 
         byte[] passwordHash = null;
         byte[] passwordSalt = null;
 
         HashingHelper.CreatePasswordHash("Man123456789.", out passwordHash, out passwordSalt);
 
-        var manager = new User
+        var admin = new User
         {
             Id = Guid.Empty,
             Username = "manager",
@@ -48,16 +46,17 @@ public class EfSeeder : ISeeder
             Email = "doga.aydin@arena.com.tr",
             EmailVerified = true,
             PhoneNumberVerified = true,
-            Role = UserRoles.Assignee,
+            Role = UserRoles.Admin,
             PasswordSalt = passwordSalt,
             PasswordHash = passwordHash
         };
 
-        manager.CreatedUserId = manager.Id;
-        context.Users.Add(manager);
+        admin.CreatedUserId = admin.Id;
+        context.Users.Add(admin);
         context.SaveChanges();
 
         #region Users
+
         HashingHelper.CreatePasswordHash("Adar123456789.", out passwordHash, out passwordSalt);
         var adar = new User
         {
@@ -69,9 +68,10 @@ public class EfSeeder : ISeeder
             Email = "adar@testmail.com",
             EmailVerified = true,
             PhoneNumberVerified = true,
-            Role = UserRoles.TeamMember,
+            Role = UserRoles.User,
             PasswordHash = passwordHash,
-            PasswordSalt =passwordSalt
+            PasswordSalt = passwordSalt,
+            CreatedUserId = admin.Id
         };
         HashingHelper.CreatePasswordHash("Arda123456789.", out passwordHash, out passwordSalt);
         var arda = new User
@@ -84,9 +84,10 @@ public class EfSeeder : ISeeder
             Email = "arda@testmail.com",
             EmailVerified = false,
             PhoneNumberVerified = true,
-            Role = UserRoles.Assignee,
+            Role = UserRoles.User,
             PasswordHash = passwordHash,
-            PasswordSalt =passwordSalt
+            PasswordSalt = passwordSalt,
+            CreatedUserId = admin.Id
         };
         HashingHelper.CreatePasswordHash("Onur123456789.", out passwordHash, out passwordSalt);
         var onur = new User
@@ -99,9 +100,10 @@ public class EfSeeder : ISeeder
             Email = "onur@testmail.com",
             EmailVerified = false,
             PhoneNumberVerified = true,
-            Role = UserRoles.TeamMember,
+            Role = UserRoles.User,
             PasswordHash = passwordHash,
-            PasswordSalt =passwordSalt
+            PasswordSalt = passwordSalt,
+            CreatedUserId = admin.Id
         };
         HashingHelper.CreatePasswordHash("Doga123456789.", out passwordHash, out passwordSalt);
         var doga = new User
@@ -114,9 +116,10 @@ public class EfSeeder : ISeeder
             Email = "doga@testmail.com",
             EmailVerified = false,
             PhoneNumberVerified = true,
-            Role = UserRoles.TeamMember,
+            Role = UserRoles.User,
             PasswordHash = passwordHash,
-            PasswordSalt =passwordSalt
+            PasswordSalt = passwordSalt,
+            CreatedUserId = admin.Id
         };
         HashingHelper.CreatePasswordHash("Tuğba123456789.", out passwordHash, out passwordSalt);
         var tugba = new User
@@ -129,9 +132,10 @@ public class EfSeeder : ISeeder
             Email = "emre@testmail.com",
             EmailVerified = false,
             PhoneNumberVerified = true,
-            Role = UserRoles.TeamMember,
+            Role = UserRoles.User,
             PasswordHash = passwordHash,
-            PasswordSalt =passwordSalt
+            PasswordSalt = passwordSalt,
+            CreatedUserId = admin.Id
         };
         HashingHelper.CreatePasswordHash("Barıs123456789.", out passwordHash, out passwordSalt);
         var barıs = new User
@@ -144,9 +148,10 @@ public class EfSeeder : ISeeder
             Email = "barıs@testmail.com",
             EmailVerified = false,
             PhoneNumberVerified = true,
-            Role = UserRoles.Assignee,
+            Role = UserRoles.User,
             PasswordHash = passwordHash,
-            PasswordSalt =passwordSalt
+            PasswordSalt = passwordSalt,
+            CreatedUserId = admin.Id
         };
         HashingHelper.CreatePasswordHash("Mesut123456789.", out passwordHash, out passwordSalt);
         var mesut = new User
@@ -159,9 +164,10 @@ public class EfSeeder : ISeeder
             Email = "mesut@testmail.com",
             EmailVerified = false,
             PhoneNumberVerified = true,
-            Role = UserRoles.Assignee,
+            Role = UserRoles.User,
             PasswordHash = passwordHash,
-            PasswordSalt =passwordSalt
+            PasswordSalt = passwordSalt,
+            CreatedUserId = admin.Id
         };
         HashingHelper.CreatePasswordHash("Fatih123456789.", out passwordHash, out passwordSalt);
         var fatih = new User
@@ -174,9 +180,10 @@ public class EfSeeder : ISeeder
             Email = "fatih@testmail.com",
             EmailVerified = false,
             PhoneNumberVerified = true,
-            Role = UserRoles.TeamMember,
+            Role = UserRoles.User,
             PasswordHash = passwordHash,
-            PasswordSalt =passwordSalt
+            PasswordSalt = passwordSalt,
+            CreatedUserId = admin.Id
         };
         HashingHelper.CreatePasswordHash("Elif123456789.", out passwordHash, out passwordSalt);
         var elif = new User
@@ -189,9 +196,10 @@ public class EfSeeder : ISeeder
             Email = "elif@testmail.com",
             EmailVerified = false,
             PhoneNumberVerified = true,
-            Role = UserRoles.Assignee,
+            Role = UserRoles.User,
             PasswordHash = passwordHash,
-            PasswordSalt =passwordSalt
+            PasswordSalt = passwordSalt,
+            CreatedUserId = admin.Id
         };
         HashingHelper.CreatePasswordHash("Emre123456789.", out passwordHash, out passwordSalt);
         var emre = new User
@@ -204,9 +212,10 @@ public class EfSeeder : ISeeder
             Email = "emre@testmail.com",
             EmailVerified = false,
             PhoneNumberVerified = true,
-            Role = UserRoles.Manager,
+            Role = UserRoles.User,
             PasswordHash = passwordHash,
-            PasswordSalt =passwordSalt
+            PasswordSalt = passwordSalt,
+            CreatedUserId = admin.Id
         };
         HashingHelper.CreatePasswordHash("Yusuf123456789.", out passwordHash, out passwordSalt);
         var yusuf = new User
@@ -219,9 +228,10 @@ public class EfSeeder : ISeeder
             Email = "yusuf@testmail.com",
             EmailVerified = false,
             PhoneNumberVerified = true,
-            Role = UserRoles.Manager,
+            Role = UserRoles.User,
             PasswordHash = passwordHash,
-            PasswordSalt =passwordSalt
+            PasswordSalt = passwordSalt,
+            CreatedUserId = admin.Id
         };
         HashingHelper.CreatePasswordHash("Aslı123456789.", out passwordHash, out passwordSalt);
         var aslı = new User
@@ -234,9 +244,10 @@ public class EfSeeder : ISeeder
             Email = "aslı@testmail.com",
             EmailVerified = false,
             PhoneNumberVerified = true,
-            Role = UserRoles.Assignee,
+            Role = UserRoles.User,
             PasswordHash = passwordHash,
-            PasswordSalt =passwordSalt
+            PasswordSalt = passwordSalt,
+            CreatedUserId = admin.Id
         };
         HashingHelper.CreatePasswordHash("Mehmet123456789.", out passwordHash, out passwordSalt);
         var mehmet = new User
@@ -249,9 +260,10 @@ public class EfSeeder : ISeeder
             Email = "mehmet@testmail.com",
             EmailVerified = false,
             PhoneNumberVerified = true,
-            Role = UserRoles.TeamMember,
+            Role = UserRoles.User,
             PasswordHash = passwordHash,
-            PasswordSalt =passwordSalt
+            PasswordSalt = passwordSalt,
+            CreatedUserId = admin.Id
         };
         HashingHelper.CreatePasswordHash("Ali123456789.", out passwordHash, out passwordSalt);
         var ali = new User
@@ -264,9 +276,10 @@ public class EfSeeder : ISeeder
             Email = "ali@testmail.com",
             EmailVerified = false,
             PhoneNumberVerified = true,
-            Role = UserRoles.TeamMember,
+            Role = UserRoles.User,
             PasswordHash = passwordHash,
-            PasswordSalt =passwordSalt
+            PasswordSalt = passwordSalt,
+            CreatedUserId = admin.Id
         };
         HashingHelper.CreatePasswordHash("Ufuk123456789.", out passwordHash, out passwordSalt);
         var ufuk = new User
@@ -279,9 +292,10 @@ public class EfSeeder : ISeeder
             Email = "ufuk@testmail.com",
             EmailVerified = false,
             PhoneNumberVerified = true,
-            Role = UserRoles.Manager,
+            Role = UserRoles.User,
             PasswordHash = passwordHash,
-            PasswordSalt =passwordSalt
+            PasswordSalt = passwordSalt,
+            CreatedUserId = admin.Id
         };
         HashingHelper.CreatePasswordHash("Ahmet123456789.", out passwordHash, out passwordSalt);
         var ahmet = new User
@@ -294,9 +308,10 @@ public class EfSeeder : ISeeder
             Email = "ahmet@testmail.com",
             EmailVerified = false,
             PhoneNumberVerified = true,
-            Role = UserRoles.TeamMember,
+            Role = UserRoles.User,
             PasswordHash = passwordHash,
-            PasswordSalt =passwordSalt
+            PasswordSalt = passwordSalt,
+            CreatedUserId = admin.Id
         };
         HashingHelper.CreatePasswordHash("Selim123456789.", out passwordHash, out passwordSalt);
         var selim = new User
@@ -309,9 +324,10 @@ public class EfSeeder : ISeeder
             Email = "selim@testmail.com",
             EmailVerified = false,
             PhoneNumberVerified = true,
-            Role = UserRoles.Assignee,
+            Role = UserRoles.User,
             PasswordHash = passwordHash,
-            PasswordSalt =passwordSalt
+            PasswordSalt = passwordSalt,
+            CreatedUserId = admin.Id
         };
         HashingHelper.CreatePasswordHash("Yasin123456789.", out passwordHash, out passwordSalt);
         var yasin = new User
@@ -324,9 +340,10 @@ public class EfSeeder : ISeeder
             Email = "yasin@testmail.com",
             EmailVerified = false,
             PhoneNumberVerified = true,
-            Role = UserRoles.Manager,
+            Role = UserRoles.User,
             PasswordHash = passwordHash,
-            PasswordSalt =passwordSalt
+            PasswordSalt = passwordSalt,
+            CreatedUserId = admin.Id
         };
         HashingHelper.CreatePasswordHash("Burak123456789.", out passwordHash, out passwordSalt);
         var burak = new User
@@ -339,9 +356,10 @@ public class EfSeeder : ISeeder
             Email = "burak@testmail.com",
             EmailVerified = false,
             PhoneNumberVerified = true,
-            Role = UserRoles.Manager,
+            Role = UserRoles.User,
             PasswordHash = passwordHash,
-            PasswordSalt =passwordSalt
+            PasswordSalt = passwordSalt,
+            CreatedUserId = admin.Id
         };
         HashingHelper.CreatePasswordHash("Cem123456789.", out passwordHash, out passwordSalt);
         var cem = new User
@@ -354,9 +372,10 @@ public class EfSeeder : ISeeder
             Email = "cem@testmail.com",
             EmailVerified = false,
             PhoneNumberVerified = true,
-            Role = UserRoles.TeamMember,
+            Role = UserRoles.User,
             PasswordHash = passwordHash,
-            PasswordSalt =passwordSalt
+            PasswordSalt = passwordSalt,
+            CreatedUserId = admin.Id
         };
         HashingHelper.CreatePasswordHash("Deniz123456789.", out passwordHash, out passwordSalt);
         var deniz = new User
@@ -369,18 +388,21 @@ public class EfSeeder : ISeeder
             Email = "deniz@testmail.com",
             EmailVerified = false,
             PhoneNumberVerified = true,
-            Role = UserRoles.TeamMember,
+            Role = UserRoles.User,
             PasswordHash = passwordHash,
-            PasswordSalt =passwordSalt
+            PasswordSalt = passwordSalt,
+            CreatedUserId = admin.Id
         };
-        
-        context.Users.AddRange(adar, arda, onur, doga, tugba, barıs, mesut, fatih, elif, emre, yusuf, aslı, mehmet, ali, ufuk, ahmet, selim, yasin, burak, cem, deniz);
+
+        context.Users.AddRange(adar, arda, onur, doga, tugba, barıs, mesut, fatih, elif, emre, yusuf, aslı, mehmet, ali,
+            ufuk, ahmet, selim, yasin, burak, cem, deniz);
         context.SaveChanges();
 
         #endregion
+
         #region Teams
 
-        var ai = new Team // DDD manager olmasın
+        var ai = new Team
         {
             Name = "AI",
             CreatedUserId = tugba.Id,
@@ -433,7 +455,7 @@ public class EfSeeder : ISeeder
         {
             Name = "Sales",
             CreatedUserId = adar.Id,
-            ManagerId =doga.Id,
+            ManagerId = doga.Id,
             Description = "Sales Team"
         };
         var customerRelations = new Team
@@ -527,11 +549,143 @@ public class EfSeeder : ISeeder
             ManagerId = doga.Id,
             Description = "Research Team"
         };
-        context.Teams.AddRange(ai, productDevelopment, projectManagement, humanResources, marketing, operations, finance, sales, customerRelations, legal, qualityAssurance, researchAndDevelopment, supplyChain, logistics, warehousing, informationTechnology, engineering, design, communications, financeAndAccounting, research);
+        context.Teams.AddRange(ai, productDevelopment, projectManagement, humanResources, marketing, operations,
+            finance, sales, customerRelations, legal, qualityAssurance, researchAndDevelopment, supplyChain, logistics,
+            warehousing, informationTechnology, engineering, design, communications, financeAndAccounting, research);
         context.SaveChanges();
+
         #endregion
+
+        #region UserTeams
+
+        var userTeam = new UserTeam
+        {
+            UserId = doga.Id,
+            TeamId = ai.Id,
+            CreatedUserId = admin.Id
+        };
+        var userTeam1 = new UserTeam
+        {
+            UserId = doga.Id,
+            TeamId = productDevelopment.Id,
+            CreatedUserId = admin.Id
+        };
+        var userTeam2 = new UserTeam
+        {
+            UserId = adar.Id,
+            TeamId = productDevelopment.Id,
+            CreatedUserId = admin.Id
+        };
+        var userTeam3 = new UserTeam
+        {
+            UserId = barıs.Id,
+            TeamId = projectManagement.Id,
+            CreatedUserId = admin.Id
+        };
+        var userTeam4 = new UserTeam
+        {
+            UserId = barıs.Id,
+            TeamId = humanResources.Id,
+            CreatedUserId = admin.Id
+        };
+        var userTeam5 = new UserTeam
+        {
+            UserId = tugba.Id,
+            TeamId = marketing.Id,
+            CreatedUserId = admin.Id
+        };
+        var userTeam6 = new UserTeam
+        {
+            UserId = arda.Id,
+            TeamId = marketing.Id,
+            CreatedUserId = admin.Id
+        };
+        var userTeam7 = new UserTeam
+        {
+            UserId = adar.Id,
+            TeamId = operations.Id,
+            CreatedUserId = admin.Id
+        };
+        var userTeam8 = new UserTeam
+        {
+            UserId = onur.Id,
+            TeamId = finance.Id,
+            CreatedUserId = admin.Id
+        };
+        var userTeam9 = new UserTeam
+        {
+            UserId = tugba.Id,
+            TeamId = sales.Id,
+            CreatedUserId = admin.Id
+        };
+        var userTeam10 = new UserTeam
+        {
+            UserId = elif.Id,
+            TeamId = ai.Id,
+            CreatedUserId = admin.Id
+        };
+        var userTeam12 = new UserTeam
+        {
+            UserId = ufuk.Id,
+            TeamId = productDevelopment.Id,
+            CreatedUserId = admin.Id
+        };
+        var userTeam13 = new UserTeam
+        {
+            UserId = doga.Id,
+            TeamId = productDevelopment.Id,
+            CreatedUserId = admin.Id
+        };
+        var userTeam14 = new UserTeam
+        {
+            UserId = onur.Id,
+            TeamId = projectManagement.Id,
+            CreatedUserId = admin.Id
+        };
+        var userTeam15 = new UserTeam
+        {
+            UserId = yusuf.Id,
+            TeamId = humanResources.Id,
+            CreatedUserId = admin.Id
+        };
+        var userTeam16 = new UserTeam
+        {
+            UserId = aslı.Id,
+            TeamId = marketing.Id,
+            CreatedUserId = admin.Id
+        };
+        var userTeam17 = new UserTeam
+        {
+            UserId = ahmet.Id,
+            TeamId = marketing.Id,
+            CreatedUserId = admin.Id
+        };
+        var userTeam18 = new UserTeam
+        {
+            UserId = arda.Id,
+            TeamId = operations.Id,
+            CreatedUserId = admin.Id
+        };
+        var userTeam19 = new UserTeam
+        {
+            UserId = ufuk.Id,
+            TeamId = finance.Id,
+            CreatedUserId = admin.Id
+        };
+        var userTeam20 = new UserTeam
+        {
+            UserId = arda.Id,
+            TeamId = sales.Id,
+            CreatedUserId = admin.Id
+        };
+        context.UserTeams.AddRange(userTeam, userTeam1, userTeam2, userTeam3, userTeam4, userTeam5, userTeam6,
+            userTeam7, userTeam8, userTeam9, userTeam10, userTeam12, userTeam13, userTeam14, userTeam15, userTeam16,
+            userTeam17, userTeam18, userTeam19, userTeam20);
+        context.SaveChanges();
+
+        #endregion
+
         #region Projects
-        // DDD looks good
 
         var project1 = new Project
         {
@@ -541,8 +695,8 @@ public class EfSeeder : ISeeder
             DueDate = DateTime.Now.AddDays(30),
             Status = ProjectStatus.Active,
             Priority = Priority.Low,
-            ManagerId = manager.Id,
-
+            ManagerId = adar.Id,
+            CreatedUserId = adar.Id
         };
         var project2 = new Project
         {
@@ -552,8 +706,8 @@ public class EfSeeder : ISeeder
             DueDate = DateTime.Now.AddDays(30),
             Status = ProjectStatus.Active,
             Priority = Priority.Medium,
-            ManagerId = manager.Id,
-
+            ManagerId = doga.Id,
+            CreatedUserId = doga.Id
         };
         var project3 = new Project
         {
@@ -563,7 +717,8 @@ public class EfSeeder : ISeeder
             DueDate = DateTime.Now.AddDays(30),
             Status = ProjectStatus.Active,
             Priority = Priority.High,
-            ManagerId = manager.Id,
+            ManagerId = elif.Id,
+            CreatedUserId = elif.Id
         };
         var project4 = new Project
         {
@@ -573,7 +728,8 @@ public class EfSeeder : ISeeder
             DueDate = DateTime.Now.AddDays(30),
             Status = ProjectStatus.Active,
             Priority = Priority.High,
-            ManagerId = manager.Id,
+            ManagerId = yusuf.Id,
+            CreatedUserId = yusuf.Id
         };
         var project5 = new Project
         {
@@ -583,7 +739,8 @@ public class EfSeeder : ISeeder
             DueDate = DateTime.Now.AddDays(30),
             Status = ProjectStatus.Active,
             Priority = Priority.Low,
-            ManagerId = manager.Id,
+            ManagerId = ahmet.Id,
+            CreatedUserId = arda.Id
         };
         var project6 = new Project
         {
@@ -593,7 +750,8 @@ public class EfSeeder : ISeeder
             DueDate = DateTime.Now.AddDays(30),
             Status = ProjectStatus.Active,
             Priority = Priority.Low,
-            ManagerId = manager.Id,
+            ManagerId = ali.Id,
+            CreatedUserId = aslı.Id
         };
         var project7 = new Project
         {
@@ -603,7 +761,8 @@ public class EfSeeder : ISeeder
             DueDate = DateTime.Now.AddDays(30),
             Status = ProjectStatus.Active,
             Priority = Priority.Low,
-            ManagerId = manager.Id,
+            ManagerId = barıs.Id,
+            CreatedUserId = barıs.Id
         };
         var project8 = new Project
         {
@@ -613,15 +772,90 @@ public class EfSeeder : ISeeder
             DueDate = DateTime.Now.AddDays(30),
             Status = ProjectStatus.Active,
             Priority = Priority.Low,
-            ManagerId = manager.Id,
+            ManagerId = onur.Id,
+            CreatedUserId = ufuk.Id
         };
 
         context.Projects.AddRange(project1, project2, project3, project4, project5, project6, project7, project8);
         context.SaveChanges();
 
         #endregion
+
+        #region TeamProjects
+
+        var tp1 = new TeamProject
+        {
+            TeamId = ai.Id,
+            ProjectId = project1.Id,
+            CreatedUserId = admin.Id
+        };
+        var tp2 = new TeamProject
+        {
+            TeamId = productDevelopment.Id,
+            ProjectId = project2.Id,
+            CreatedUserId = admin.Id
+        };
+        var tp3 = new TeamProject
+        {
+            TeamId = projectManagement.Id,
+            ProjectId = project3.Id,
+            CreatedUserId = admin.Id
+        };
+        var tp4 = new TeamProject
+        {
+            TeamId = humanResources.Id,
+            ProjectId = project4.Id,
+            CreatedUserId = admin.Id
+        };
+        var tp5 = new TeamProject
+        {
+            TeamId = marketing.Id,
+            ProjectId = project5.Id,
+            CreatedUserId = admin.Id
+        };
+        var tp6 = new TeamProject
+        {
+            TeamId = operations.Id,
+            ProjectId = project6.Id,
+            CreatedUserId = admin.Id
+        };
+        var tp7 = new TeamProject
+        {
+            TeamId = finance.Id,
+            ProjectId = project7.Id,
+            CreatedUserId = admin.Id
+        };
+        var tp8 = new TeamProject
+        {
+            TeamId = sales.Id,
+            ProjectId = project8.Id,
+            CreatedUserId = admin.Id
+        };
+        var tp9 = new TeamProject
+        {
+            TeamId = humanResources.Id,
+            ProjectId = project8.Id,
+            CreatedUserId = admin.Id
+        };
+        var tp10 = new TeamProject
+        {
+            TeamId = sales.Id,
+            ProjectId = project1.Id,
+            CreatedUserId = admin.Id
+        };
+        var tp11 = new TeamProject
+        {
+            TeamId = financeAndAccounting.Id,
+            ProjectId = project2.Id,
+            CreatedUserId = admin.Id
+        };
+        context.TeamProjects.AddRange(tp1, tp2, tp3, tp4, tp5, tp6, tp7, tp8, tp9, tp10, tp11);
+        context.SaveChanges();
+
+        #endregion
+
         #region Duties
-        //write duty seed data
+
         var duty1 = new Duty
         {
             Title = "Duty 1",
@@ -630,9 +864,10 @@ public class EfSeeder : ISeeder
             DueDate = DateTime.Now.AddDays(30),
             Priority = Priority.Low,
             ProjectId = project1.Id,
-            ReporterId = manager.Id,
-            Status = DutyStatus.ToDo
-            
+            ReporterId = adar.Id,
+            CreatedUserId = adar.Id,
+            Status = DutyStatus.ToDo,
+            Labels = new List<string> { "testing", "development", "design" }
         };
         var duty2 = new Duty
         {
@@ -642,8 +877,10 @@ public class EfSeeder : ISeeder
             DueDate = DateTime.Now.AddDays(30),
             Priority = Priority.Medium,
             ProjectId = project2.Id,
-            ReporterId = manager.Id,
-            Status = DutyStatus.InProgress
+            ReporterId = elif.Id,
+            CreatedUserId = elif.Id,
+            Status = DutyStatus.InProgress,
+            Labels = new List<string> { "analysis", "development", "design" }
         };
         var duty3 = new Duty
         {
@@ -653,8 +890,10 @@ public class EfSeeder : ISeeder
             DueDate = DateTime.Now.AddDays(30),
             Priority = Priority.High,
             ProjectId = project3.Id,
-            ReporterId = manager.Id,
-            Status = DutyStatus.Completed
+            ReporterId = doga.Id,
+            CreatedUserId = doga.Id,
+            Status = DutyStatus.Completed,
+            Labels = new List<string> { "bug", "cors", "ai" }
         };
         var duty4 = new Duty
         {
@@ -664,8 +903,10 @@ public class EfSeeder : ISeeder
             DueDate = DateTime.Now.AddDays(30),
             Priority = Priority.High,
             ProjectId = project4.Id,
-            ReporterId = manager.Id,
-            Status = DutyStatus.Canceled
+            ReporterId = onur.Id,
+            CreatedUserId = onur.Id,
+            Status = DutyStatus.Canceled,
+            Labels = new List<string> { "security" }
         };
         var duty5 = new Duty
         {
@@ -675,8 +916,10 @@ public class EfSeeder : ISeeder
             DueDate = DateTime.Now.AddDays(30),
             Priority = Priority.Low,
             ProjectId = project5.Id,
-            ReporterId = manager.Id,
-            Status = DutyStatus.InReview
+            ReporterId = ufuk.Id,
+            CreatedUserId = ufuk.Id,
+            Status = DutyStatus.InReview,
+            Labels = new List<string> { "finance", "accounting" }
         };
         var duty6 = new Duty
         {
@@ -686,8 +929,10 @@ public class EfSeeder : ISeeder
             DueDate = DateTime.Now.AddDays(30),
             Priority = Priority.Low,
             ProjectId = project6.Id,
-            ReporterId = manager.Id,
-            Status = DutyStatus.InReview
+            ReporterId = yusuf.Id,
+            CreatedUserId = yusuf.Id,
+            Status = DutyStatus.InReview,
+            Labels = new List<string> { "finance", "accounting" }
         };
         var duty7 = new Duty
         {
@@ -696,8 +941,11 @@ public class EfSeeder : ISeeder
             DutyType = DutyType.Planned,
             DueDate = DateTime.Now.AddDays(30),
             Priority = Priority.Low,
-            ReporterId = manager.Id,
-            ProjectId = project7.Id
+            ReporterId = arda.Id,
+            CreatedUserId = arda.Id,
+            ProjectId = project7.Id,
+            Status = DutyStatus.Canceled,
+            Labels = new List<string> { "testing", "development", "design" }
         };
         var duty8 = new Duty
         {
@@ -707,233 +955,80 @@ public class EfSeeder : ISeeder
             DueDate = DateTime.Now.AddDays(30),
             Priority = Priority.Low,
             ProjectId = project8.Id,
-            ReporterId = manager.Id,
-            Status = DutyStatus.ToDo
+            ReporterId = arda.Id,
+            CreatedUserId = arda.Id,
+            Status = DutyStatus.ToDo,
+            Labels = new List<string> { "testing" }
         };
-        context.Duties.AddRange(duty1, duty2, duty3, duty4, duty5, duty6, duty7, duty8); 
+        context.Duties.AddRange(duty1, duty2, duty3, duty4, duty5, duty6, duty7, duty8);
         context.SaveChanges();
-        
+
         #endregion
+
         #region UserDuties
-        //write user duties seed data
-        
+
         var userDuty1 = new UserDuty
         {
             UserId = adar.Id,
-            DutyId = duty1.Id
+            DutyId = duty1.Id,
+            CreatedUserId = admin.Id
         };
         var userDuty2 = new UserDuty
         {
             UserId = arda.Id,
-            DutyId = duty2.Id
+            DutyId = duty2.Id,
+            CreatedUserId = admin.Id
         };
         var userDuty3 = new UserDuty
         {
             UserId = onur.Id,
-            DutyId = duty3.Id
+            DutyId = duty3.Id,
+            CreatedUserId = admin.Id
         };
         var userDuty4 = new UserDuty
         {
             UserId = barıs.Id,
-            DutyId = duty4.Id
+            DutyId = duty4.Id,
+            CreatedUserId = admin.Id
         };
         var userDuty5 = new UserDuty
         {
             UserId = tugba.Id,
-            DutyId = duty5.Id
+            DutyId = duty5.Id,
+            CreatedUserId = admin.Id
         };
         var userDuty6 = new UserDuty
         {
             UserId = arda.Id,
-            DutyId = duty6.Id
+            DutyId = duty6.Id,
+            CreatedUserId = admin.Id
         };
         var userDuty7 = new UserDuty
         {
             UserId = adar.Id,
-            DutyId = duty7.Id
+            DutyId = duty7.Id,
+            CreatedUserId = admin.Id
         };
         var userDuty8 = new UserDuty
         {
             UserId = onur.Id,
-            DutyId = duty8.Id
+            DutyId = duty8.Id,
+            CreatedUserId = admin.Id
         };
-        context.UserDuties.AddRange(userDuty1, userDuty2, userDuty3, userDuty4, userDuty5, userDuty6, userDuty7, userDuty8);
-        context.SaveChanges();
-        #endregion
-        #region TeamProjects
-
-        var tp1 = new TeamProject
-        {
-            TeamId = ai.Id,
-            ProjectId = project1.Id
-        }; // DDD dışarı çıkar
-        var tp2 = new TeamProject
-        {
-            TeamId = productDevelopment.Id,
-            ProjectId = project2.Id
-        };
-        var tp3 = new TeamProject
-        {
-            TeamId = projectManagement.Id,
-            ProjectId = project3.Id
-        };
-        var tp4 = new TeamProject
-        {
-            TeamId = humanResources.Id,
-            ProjectId = project4.Id
-        };
-        var tp5 = new TeamProject
-        {
-            TeamId = marketing.Id,
-            ProjectId = project5.Id
-        };
-        var tp6 = new TeamProject
-        {
-            TeamId = operations.Id,
-            ProjectId = project6.Id
-        };
-        var tp7 = new TeamProject
-        {
-            TeamId = finance.Id,
-            ProjectId = project7.Id
-        };
-        var tp8 = new TeamProject
-        {
-            TeamId = sales.Id,
-            ProjectId = project8.Id
-        };
-        context.TeamProjects.AddRange(tp1, tp2, tp3, tp4, tp5, tp6, tp7, tp8);
+        context.UserDuties.AddRange(userDuty1, userDuty2, userDuty3, userDuty4, userDuty5, userDuty6, userDuty7,
+            userDuty8);
         context.SaveChanges();
 
         #endregion
-        #region UserTeams
 
-        var userTeam = new UserTeam
-        {
-            UserId = doga.Id,
-            TeamId = ai.Id
-        };
-        var userTeam1 = new UserTeam
-        {
-            UserId = doga.Id,
-            TeamId = productDevelopment.Id
-        };
-        var userTeam2 = new UserTeam
-        {
-            UserId = adar.Id,
-            TeamId = productDevelopment.Id
-        };
-        var userTeam3 = new UserTeam
-        {
-            UserId = barıs.Id,
-            TeamId = projectManagement.Id
-        };
-        var userTeam4 = new UserTeam
-        {
-            UserId = barıs.Id,
-            TeamId = humanResources.Id
-        };
-        var userTeam5 = new UserTeam
-        {
-            UserId = tugba.Id,
-            TeamId = marketing.Id
-        };
-        var userTeam6 = new UserTeam
-        {
-            UserId = arda.Id,
-            TeamId = marketing.Id
-        };
-        var userTeam7 = new UserTeam
-        {
-            UserId = adar.Id,
-            TeamId = operations.Id
-        };
-        var userTeam8 = new UserTeam
-        {
-            UserId = onur.Id,
-            TeamId = finance.Id
-        };
-        var userTeam9 = new UserTeam
-        {
-            UserId = tugba.Id,
-            TeamId = sales.Id
-        };
-        context.UserTeams.AddRange(userTeam, userTeam1, userTeam2, userTeam3, userTeam4, userTeam5, userTeam6, userTeam7, userTeam8, userTeam9);
-        context.SaveChanges();
-
-
-        #endregion
-        #region Labels
-        var label1 = new Label
-        {
-            Name = "Label 1",
-            Color = LabelColors.White,
-            Description = "Label 1 Description"
-        };
-        var label2 = new Label
-        {
-            Name = "Label 2",
-            Color = LabelColors.Black,
-            Description = "Label 2 Description"
-        };
-        var label3 = new Label
-        {
-            Name = "Label 3",
-            Color = LabelColors.Red,
-            Description = "Label 3 Description"
-        };
-        var label4 = new Label
-        {
-            Name = "Label 4",
-            Color = LabelColors.Green,
-            Description = "Label 4 Description"
-        };
-        var label5 = new Label
-        {
-            Name = "Label 5",
-            Color = LabelColors.Blue,
-            Description = "Label 5 Description"
-        };
-        var label6 = new Label
-        {
-            Name = "Label 6",
-            Color = LabelColors.Yellow,
-            Description = "Label 6 Description"
-        };
-        var label7 = new Label
-        {
-            Name = "Label 7",
-            Color = LabelColors.Purple,
-            Description = "Label 7 Description"
-        };
-        var label8 = new Label
-        {
-            Name = "Label 8",
-            Color = LabelColors.Magenta,
-            Description = "Label 8 Description"
-        };
-        var label9 = new Label
-        {
-            Name = "Label 9",
-            Color = LabelColors.Orange,
-            Description = "Label 9 Description"
-        };
-        var label10 = new Label
-        {
-            Name = "Label 10",
-            Color = LabelColors.Pink,
-            Description = "Label 10 Description"
-        };
-        context.Labels.AddRange(label1, label2, label3, label4, label5, label6, label7, label8, label9, label10);
-        context.SaveChanges();
-        #endregion
         #region Comment
+
         var comment1 = new Comment
         {
             AuthorId = adar.Id,
             DutyId = duty1.Id,
             Text = "Comment 1",
-            
+            CreatedUserId = adar.Id,
             CreatedAt = DateTime.Now
         };
         var comment2 = new Comment
@@ -941,6 +1036,7 @@ public class EfSeeder : ISeeder
             AuthorId = arda.Id,
             DutyId = duty2.Id,
             Text = "Comment 2",
+            CreatedUserId = arda.Id,
             CreatedAt = DateTime.Now
         };
         var comment3 = new Comment
@@ -948,6 +1044,7 @@ public class EfSeeder : ISeeder
             AuthorId = onur.Id,
             DutyId = duty3.Id,
             Text = "Comment 3",
+            CreatedUserId = onur.Id,
             CreatedAt = DateTime.Now
         };
         var comment4 = new Comment
@@ -955,6 +1052,7 @@ public class EfSeeder : ISeeder
             AuthorId = barıs.Id,
             DutyId = duty4.Id,
             Text = "Comment 4",
+            CreatedUserId = barıs.Id,
             CreatedAt = DateTime.Now
         };
         var comment5 = new Comment
@@ -962,6 +1060,7 @@ public class EfSeeder : ISeeder
             AuthorId = tugba.Id,
             DutyId = duty5.Id,
             Text = "Comment 5",
+            CreatedUserId = tugba.Id,
             CreatedAt = DateTime.Now
         };
         var comment6 = new Comment
@@ -969,6 +1068,7 @@ public class EfSeeder : ISeeder
             AuthorId = arda.Id,
             DutyId = duty6.Id,
             Text = "Comment 6",
+            CreatedUserId = arda.Id,
             CreatedAt = DateTime.Now
         };
         var comment7 = new Comment
@@ -976,6 +1076,7 @@ public class EfSeeder : ISeeder
             AuthorId = adar.Id,
             DutyId = duty7.Id,
             Text = "Comment 7",
+            CreatedUserId = adar.Id,
             CreatedAt = DateTime.Now
         };
         var comment8 = new Comment
@@ -983,10 +1084,12 @@ public class EfSeeder : ISeeder
             AuthorId = onur.Id,
             DutyId = duty8.Id,
             Text = "Comment 8",
+            CreatedUserId = onur.Id,
             CreatedAt = DateTime.Now
         };
         context.Comments.AddRange(comment1, comment2, comment3, comment4, comment5, comment6, comment7, comment8);
         context.SaveChanges();
+
         #endregion
     }
 

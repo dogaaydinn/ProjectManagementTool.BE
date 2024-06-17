@@ -5,7 +5,6 @@ using Domain.Entities.DutyManagement;
 using Domain.Entities.DutyManagement.UserManagement;
 using Domain.Entities.ProjectManagement;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.ChangeTracking;
 
 namespace DataAccess.Context.EntityFramework;
 
@@ -29,109 +28,83 @@ public sealed class EfDbContext : EfDbContextBase
 
     public DbSet<Comment> Comments { get; set; }
 
-    public DbSet<Label> Labels { get; set; }
-
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
-{
-    base.OnModelCreating(modelBuilder);
+    {
+        base.OnModelCreating(modelBuilder);
 
-    // Configure the relationship ParentDuty and SubDuties
-    modelBuilder.Entity<Duty>()
-        .HasMany(d => d.SubDuties)
-        .WithOne(d => d.ParentDuty)
-        .HasForeignKey(d => d.ParentDutyId)
-        .OnDelete(DeleteBehavior.Restrict);
+        // Configure the relationship ParentDuty and SubDuties
+        modelBuilder.Entity<Duty>()
+            .HasMany(d => d.SubDuties)
+            .WithOne(d => d.ParentDuty)
+            .HasForeignKey(d => d.ParentDutyId)
+            .OnDelete(DeleteBehavior.Restrict);
 
-    // Configure the relationship between Duty and Project
-    modelBuilder.Entity<Duty>()
-        .HasOne(d => d.Project)
-        .WithMany(p => p.Duties)
-        .HasForeignKey(d => d.ProjectId)
-        .OnDelete(DeleteBehavior.Restrict);
+        // Configure the relationship between Duty and Project
+        modelBuilder.Entity<Duty>()
+            .HasOne(d => d.Project)
+            .WithMany(p => p.Duties)
+            .HasForeignKey(d => d.ProjectId)
+            .OnDelete(DeleteBehavior.Restrict);
 
-    // Configure the relationship between Duty and Comment
-    modelBuilder.Entity<Duty>()
-        .HasMany(d => d.Comments)
-        .WithOne(c => c.Duty)
-        .HasForeignKey(c => c.DutyId)
-        .OnDelete(DeleteBehavior.Restrict);
+        // Configure the relationship between Duty and Comment
+        modelBuilder.Entity<Duty>()
+            .HasMany(d => d.Comments)
+            .WithOne(c => c.Duty)
+            .HasForeignKey(c => c.DutyId)
+            .OnDelete(DeleteBehavior.Restrict);
 
-    // Configure the relationship between Duty and Label
-    modelBuilder.Entity<Duty>()
-        .HasMany(d => d.Labels)
-        .WithMany(l => l.Duties)
-        .UsingEntity<Dictionary<string, object>>(
-            "DutyLabel",
-            j => j
-                .HasOne<Label>()
-                .WithMany()
-                .HasForeignKey("LabelId"),
-            j => j
-                .HasOne<Duty>()
-                .WithMany()
-                .HasForeignKey("DutyId")
-        );
+        // Configure the relationship between Duty and User (AssignedUsers)
+        modelBuilder.Entity<Duty>()
+            .HasMany(d => d.AssignedUsers)
+            .WithMany(u => u.AssignedDuties)
+            .UsingEntity<Dictionary<string, object>>(
+                "DutyUser",
+                j => j
+                    .HasOne<User>()
+                    .WithMany()
+                    .HasForeignKey("UserId"),
+                j => j
+                    .HasOne<Duty>()
+                    .WithMany()
+                    .HasForeignKey("DutyId")
+            );
+        
+        // Configure the relationship between User and Duty (UserDuties)
+        modelBuilder.Entity<User>()
+            .HasMany(u => u.AssignedDuties)
+            .WithMany(d => d.AssignedUsers)
+            .UsingEntity<Dictionary<string, object>>(
+                "DutyUser",
+                j => j
+                    .HasOne<Duty>()
+                    .WithMany()
+                    .HasForeignKey("DutyId"),
+                j => j
+                    .HasOne<User>()
+                    .WithMany()
+                    .HasForeignKey("UserId")
+            );
 
-    // Configure the relationship between Duty and User (AssignedUsers)
-    modelBuilder.Entity<Duty>()
-        .HasMany(d => d.AssignedUsers)
-        .WithMany(u => u.AssignedDuties)
-        .UsingEntity<Dictionary<string, object>>(
-            "DutyUser",
-            j => j
-                .HasOne<User>()
-                .WithMany()
-                .HasForeignKey("UserId"),
-            j => j
-                .HasOne<Duty>()
-                .WithMany()
-                .HasForeignKey("DutyId")
-        );
+        // Configure the relationship between User and ReportedDuties
+        modelBuilder.Entity<User>()
+            .HasMany(u => u.ReportedDuties)
+            .WithOne(d => d.Reporter)
+            .HasForeignKey(d => d.ReporterId)
+            .OnDelete(DeleteBehavior.Restrict);
 
-    // Configure the relationship between User and Duty (UserDuties)
-    modelBuilder.Entity<User>()
-        .HasMany(u => u.AssignedDuties)
-        .WithMany(d => d.AssignedUsers)
-        .UsingEntity<Dictionary<string, object>>(
-            "DutyUser",
-            j => j
-                .HasOne<Duty>()
-                .WithMany()
-                .HasForeignKey("DutyId"),
-            j => j
-                .HasOne<User>()
-                .WithMany()
-                .HasForeignKey("UserId")
-        );
+        // Configure the relationship between Project and User (Manager)
+        modelBuilder.Entity<Project>()
+            .HasOne(p => p.Manager)
+            .WithMany(u => u.ManagedProjects)
+            .HasForeignKey(p => p.ManagerId)
+            .OnDelete(DeleteBehavior.Cascade);
 
-    // Configure the relationship between User and ManagedTeams
-    modelBuilder.Entity<User>()
-        .HasMany(u => u.ManagedTeams)
-        .WithOne(t => t.Manager)
-        .HasForeignKey(t => t.ManagerId)
-        .OnDelete(DeleteBehavior.Restrict);
+        modelBuilder.Entity<User>()
+            .Property(u => u.FirstName)
+            .IsRequired();
+    }
 
-    // Configure the relationship between User and ReportedDuties
-    modelBuilder.Entity<User>()
-        .HasMany(u => u.ReportedDuties)
-        .WithOne(d => d.Reporter)
-        .HasForeignKey(d => d.ReporterId)
-        .OnDelete(DeleteBehavior.Restrict);
-
-    // Configure the relationship between Project and User (Manager)
-    modelBuilder.Entity<Project>()
-        .HasOne(p => p.Manager)
-        .WithMany(u => u.ManagedProjects)
-        .HasForeignKey(p => p.ManagerId)
-        .OnDelete(DeleteBehavior.Cascade);
-    
-    modelBuilder.Entity<User>()
-        .Property(u => u.FirstName)
-        .IsRequired();
-
-}
-    
 
     #region büyükbirricın
 

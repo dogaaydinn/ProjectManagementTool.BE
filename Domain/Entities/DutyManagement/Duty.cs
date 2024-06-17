@@ -18,12 +18,12 @@ public class Duty : EntityBase
     public Guid ProjectId { get; set; } // Foreign key referencing Project.Id
     public User Reporter { get; set; } // The task is reported by a user
     public Guid ReporterId { get; set; } // The task is reported by a user
-    public DutyStatus Status { get; set; } // The task has a status
+    public DutyStatus Status { get; set; } = DutyStatus.ToDo;
     public Guid? ParentDutyId { get; set; } // The task has a parent task
     public Duty ParentDuty { get; set; } // The task has a parent task
     public bool IsDeleted { get; set; } // The task can be deleted
     public virtual ICollection<Comment>? Comments { get; set; } // The task has several comments
-    public virtual ICollection<Label>? Labels { get; set; } // The task has several labels
+    public virtual ICollection<string> Labels { get; set; } // The task has several labels
     public virtual ICollection<User>? AssignedUsers { get; set; } // The task has several users
     public virtual ICollection<Duty> SubDuties { get; set; }
 }

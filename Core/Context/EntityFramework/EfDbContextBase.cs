@@ -27,7 +27,7 @@ public class EfDbContextBase : DbContext
         return result;
     }
 
-    public override async Task<int> SaveChangesAsync(CancellationToken cancellationToken = new CancellationToken())
+    public override async Task<int> SaveChangesAsync(CancellationToken cancellationToken = new())
     {
         OnBeforeSaveChanges();
         var result = await base.SaveChangesAsync(cancellationToken);
@@ -35,6 +35,7 @@ public class EfDbContextBase : DbContext
 
         return result;
     }
+
     protected virtual void OnBeforeSaveChanges()
     {
         // do something before save changes

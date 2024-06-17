@@ -228,6 +228,10 @@ namespace DataAccess.Migrations
                     b.Property<bool>("IsDeleted")
                         .HasColumnType("tinyint(1)");
 
+                    b.Property<string>("Labels")
+                        .IsRequired()
+                        .HasColumnType("longtext");
+
                     b.Property<Guid?>("ParentDutyId")
                         .HasColumnType("char(36)");
 
@@ -263,50 +267,6 @@ namespace DataAccess.Migrations
                     b.HasIndex("ReporterId");
 
                     b.ToTable("Duties");
-                });
-
-            modelBuilder.Entity("Domain.Entities.DutyManagement.Label", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("char(36)");
-
-                    b.Property<string>("Color")
-                        .IsRequired()
-                        .HasColumnType("longtext");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("datetime(6)");
-
-                    b.Property<Guid?>("CreatedUserId")
-                        .HasColumnType("char(36)");
-
-                    b.Property<DateTime?>("DeletedAt")
-                        .HasColumnType("datetime(6)");
-
-                    b.Property<Guid?>("DeletedUserId")
-                        .HasColumnType("char(36)");
-
-                    b.Property<string>("Description")
-                        .IsRequired()
-                        .HasColumnType("longtext");
-
-                    b.Property<bool>("IsDeleted")
-                        .HasColumnType("tinyint(1)");
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasColumnType("longtext");
-
-                    b.Property<DateTime?>("UpdatedAt")
-                        .HasColumnType("datetime(6)");
-
-                    b.Property<Guid?>("UpdatedUserId")
-                        .HasColumnType("char(36)");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("Labels");
                 });
 
             modelBuilder.Entity("Domain.Entities.DutyManagement.UserManagement.User", b =>
@@ -385,6 +345,9 @@ namespace DataAccess.Migrations
                         .HasMaxLength(127)
                         .HasColumnType("varchar(127)");
 
+                    b.Property<Guid?>("ProjectId")
+                        .HasColumnType("char(36)");
+
                     b.Property<string>("ResetPasswordCode")
                         .HasColumnType("longtext");
 
@@ -411,6 +374,8 @@ namespace DataAccess.Migrations
                         .HasColumnType("varchar(127)");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("ProjectId");
 
                     b.ToTable("Users");
                 });
@@ -524,21 +489,6 @@ namespace DataAccess.Migrations
                     b.HasIndex("ManagerId");
 
                     b.ToTable("Teams");
-                });
-
-            modelBuilder.Entity("DutyLabel", b =>
-                {
-                    b.Property<Guid>("DutyId")
-                        .HasColumnType("char(36)");
-
-                    b.Property<Guid>("LabelId")
-                        .HasColumnType("char(36)");
-
-                    b.HasKey("DutyId", "LabelId");
-
-                    b.HasIndex("LabelId");
-
-                    b.ToTable("DutyLabel");
                 });
 
             modelBuilder.Entity("DutyUser", b =>
@@ -693,6 +643,13 @@ namespace DataAccess.Migrations
                     b.Navigation("Reporter");
                 });
 
+            modelBuilder.Entity("Domain.Entities.DutyManagement.UserManagement.User", b =>
+                {
+                    b.HasOne("Domain.Entities.ProjectManagement.Project", null)
+                        .WithMany("Users")
+                        .HasForeignKey("ProjectId");
+                });
+
             modelBuilder.Entity("Domain.Entities.ProjectManagement.Project", b =>
                 {
                     b.HasOne("Domain.Entities.DutyManagement.UserManagement.User", "Manager")
@@ -713,21 +670,6 @@ namespace DataAccess.Migrations
                         .IsRequired();
 
                     b.Navigation("Manager");
-                });
-
-            modelBuilder.Entity("DutyLabel", b =>
-                {
-                    b.HasOne("Domain.Entities.DutyManagement.Duty", null)
-                        .WithMany()
-                        .HasForeignKey("DutyId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("Domain.Entities.DutyManagement.Label", null)
-                        .WithMany()
-                        .HasForeignKey("LabelId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
                 });
 
             modelBuilder.Entity("DutyUser", b =>
@@ -801,6 +743,8 @@ namespace DataAccess.Migrations
             modelBuilder.Entity("Domain.Entities.ProjectManagement.Project", b =>
                 {
                     b.Navigation("Duties");
+
+                    b.Navigation("Users");
                 });
 #pragma warning restore 612, 618
         }

@@ -2,7 +2,7 @@ using Core.Domain.Abstract;
 
 namespace Domain.DTOs.Auth;
 
-public class LoginDto: IDto
+public class LoginDto : IDto
 {
     public string? Email { get; set; }
     public string? Username { get; set; }

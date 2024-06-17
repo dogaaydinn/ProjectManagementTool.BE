@@ -2,7 +2,7 @@ using Core.Domain.Abstract;
 
 namespace Domain.DTOs.DutyManagement.UserManagement;
 
-public class  UserCreateDto: IDto
+public class UserCreateDto : IDto
 {
     public string Username { get; set; }
     public string FirstName { get; set; }

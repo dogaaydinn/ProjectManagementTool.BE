@@ -12,11 +12,11 @@ namespace Business.Services.Communication.Concrete;
 
 public class CommentManager : ICommentService
 {
-    private readonly IMapper _mapper = ServiceTool.GetService<IMapper>()!;
     private readonly ICommentDal _commentDal = ServiceTool.GetService<ICommentDal>()!;
-        
-    
+    private readonly IMapper _mapper = ServiceTool.GetService<IMapper>()!;
+
     #region GetAll
+
     public async Task<ServiceCollectionResult<CommentGetDto?>> GetAllAsync()
     {
         var result = new ServiceCollectionResult<CommentGetDto?>();
@@ -38,6 +38,7 @@ public class CommentManager : ICommentService
 
         return result;
     }
+
     #endregion
 
     #region GetById
@@ -60,15 +61,14 @@ public class CommentManager : ICommentService
         {
             result.Fail(new ErrorMessage("Comment-749030", e.Message));
         }
-        
+
         return result;
-
     }
-
 
     #endregion
 
     #region GetByDutyId
+
     public async Task<ServiceCollectionResult<CommentGetDto?>> GetByDutyIdAsync(Guid dutyId)
     {
         var result = new ServiceCollectionResult<CommentGetDto?>();
@@ -90,9 +90,11 @@ public class CommentManager : ICommentService
 
         return result;
     }
+
     #endregion
 
     #region GetByAuthorId
+
     public async Task<ServiceCollectionResult<CommentGetDto?>> GetByAuthorIdAsync(Guid authorId)
     {
         var result = new ServiceCollectionResult<CommentGetDto?>();
@@ -114,9 +116,11 @@ public class CommentManager : ICommentService
 
         return result;
     }
+
     #endregion
 
     #region ReplyTo
+
     public async Task<ServiceCollectionResult<CommentGetDto?>> GetByReplyToIdAsync(Guid replyToId)
     {
         var result = new ServiceCollectionResult<CommentGetDto?>();
@@ -138,9 +142,11 @@ public class CommentManager : ICommentService
 
         return result;
     }
+
     #endregion
 
     #region Update
+
     public async Task<ServiceObjectResult<CommentGetDto?>> UpdateAsync(CommentUpdateDto commentUpdateDto)
     {
         var result = new ServiceObjectResult<CommentGetDto?>();
@@ -194,9 +200,11 @@ public class CommentManager : ICommentService
 
         return result;
     }
+
     #endregion
 
     #region Create
+
     public async Task<ServiceObjectResult<CommentGetDto?>> CreateAsync(CommentCreateDto commentCreateDto)
     {
         var result = new ServiceObjectResult<CommentGetDto?>();
@@ -228,11 +236,14 @@ public class CommentManager : ICommentService
         {
             result.Fail(new ErrorMessage("Comment-339459", e.Message));
         }
+
         return result;
     }
+
     #endregion
-    
+
     #region DeleteById
+
     public async Task<ServiceObjectResult<CommentGetDto?>> DeleteByIdAsync(Guid id)
     {
         var result = new ServiceObjectResult<CommentGetDto?>();
@@ -262,5 +273,6 @@ public class CommentManager : ICommentService
 
         return result;
     }
+
     #endregion
 }

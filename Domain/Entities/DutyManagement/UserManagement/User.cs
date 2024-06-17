@@ -22,9 +22,6 @@ public class User : EntityBase
     public virtual ICollection<Team>
         ParticipatedTeams { get; set; } // Navigation property for many-to-many relationship with Team
 
-    public virtual ICollection<Team>
-        ManagedTeams { get; set; } // Navigation property for one-to-many relationship with Team
-
     public virtual ICollection<Project>
         ManagedProjects { get; set; } // Navigation property for one-to-many relationship with Project
 
