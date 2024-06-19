@@ -1,4 +1,4 @@
-namespace Core.Constants;
+namespace Core.Constants.AuthPolicies;
 
 public static class AuthPolicies
 {

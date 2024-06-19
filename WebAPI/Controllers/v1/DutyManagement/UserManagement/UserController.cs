@@ -1,6 +1,7 @@
 using Business.Services.DutyManagement.Abstract;
 using Core.Api.Abstract;
 using Core.Constants;
+using Core.Constants.AuthPolicies;
 using Core.Utils.IoC;
 using Domain.DTOs.DutyManagement.UserManagement;
 using Microsoft.AspNetCore.Authorization;
@@ -14,7 +15,6 @@ public class UserController : BaseController
     private readonly IUserService _userService = ServiceTool.GetService<IUserService>()!;
 
     #region Get
-
     [HttpGet]
     [Authorize(Policy = AuthPolicies.AdminOnly)]
     public async Task<IActionResult> GetAll()
@@ -24,11 +24,9 @@ public class UserController : BaseController
             return BadRequest(result);
         return Ok(result);
     }
-
     #endregion
 
     #region GetById
-
     [Authorize]
     [HttpGet("{id:guid}")]
     public async Task<IActionResult> GetById(Guid id)
@@ -38,11 +36,9 @@ public class UserController : BaseController
             return BadRequest(result);
         return Ok(result);
     }
-
     #endregion
 
     #region GetByRole
-
     [Authorize(Policy = AuthPolicies.AdminOnly)]
     [HttpGet("role/{role}")]
     public async Task<IActionResult> GetByRole(string role)
@@ -54,11 +50,9 @@ public class UserController : BaseController
 
         return Ok(result);
     }
-
     #endregion
 
     #region GetByUsername
-
     [Authorize]
     [HttpGet("username/{username}")]
     public async Task<IActionResult> GetByUsername(string username)
@@ -70,11 +64,9 @@ public class UserController : BaseController
 
         return Ok(result);
     }
-
     #endregion
 
     #region GetByEmail
-
     [Authorize]
     [HttpGet("email/{email}")]
     public async Task<IActionResult> GetByEmail(string email)
@@ -86,11 +78,9 @@ public class UserController : BaseController
 
         return Ok(result);
     }
-
     #endregion
 
     #region GetByPhoneNumber
-
     [Authorize]
     [HttpGet("phone/{phone}")]
     public async Task<IActionResult> GetByPhoneNumber(string phone)
@@ -102,11 +92,9 @@ public class UserController : BaseController
 
         return Ok(result);
     }
-
     #endregion
 
     #region ChangePassword
-
     [Authorize]
     [HttpPost("change-password")]
     public async Task<IActionResult> ChangePasswordAsync([FromBody] ChangePasswordDto changePasswordDto)
@@ -120,7 +108,6 @@ public class UserController : BaseController
             ? BadRequest(result)
             : Ok(result);
     }
-
     #endregion
 
     #region Update
@@ -138,16 +125,13 @@ public class UserController : BaseController
     }
 
     #endregion
-
-    //TODO:AssignUserToProject
-    //TODO:AssignUserToTeam
+    
     //TODO:RemoveUserFromTeam
     //TODO:RemoveUserFromProject
     // TODO: GetALlUsersByTeamId
     // TODO: GetALlUsersByProjectId
 
     #region DeleteById
-
     [Authorize]
     [HttpDelete("{id:guid}")]
     public async Task<IActionResult> DeleteById(Guid id)
@@ -159,6 +143,5 @@ public class UserController : BaseController
 
         return Ok(result);
     }
-
     #endregion
 }

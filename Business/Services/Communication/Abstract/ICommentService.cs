@@ -1,3 +1,4 @@
+using Core.Constants.SortOptions;
 using Core.Services;
 using Core.Services.Result;
 using Domain.DTOs.Communication;
@@ -6,7 +7,7 @@ namespace Business.Services.Communication.Abstract;
 
 public interface ICommentService : IService
 {
-    Task<ServiceCollectionResult<CommentGetDto?>> GetAllAsync();
+    Task<ServiceCollectionResult<CommentGetDto?>> GetAllAsync(DutySortOptions? dutySortOptions);
     Task<ServiceObjectResult<CommentGetDto?>> GetByIdAsync(Guid id);
     Task<ServiceCollectionResult<CommentGetDto?>> GetByDutyIdAsync(Guid dutyId);
     Task<ServiceCollectionResult<CommentGetDto?>> GetByAuthorIdAsync(Guid authorId);

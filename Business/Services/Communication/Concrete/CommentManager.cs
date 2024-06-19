@@ -1,12 +1,20 @@
 using AutoMapper;
 using Business.Services.Communication.Abstract;
+using Core.Constants;
+using Core.Constants.SortOptions;
 using Core.ExceptionHandling;
 using Core.Services.Messages;
 using Core.Services.Result;
+using Core.Utils.Auth;
 using Core.Utils.IoC;
+using DataAccess.Repositories.Abstract.Association;
 using DataAccess.Repositories.Abstract.Communication;
+using DataAccess.Repositories.Abstract.ProjectManagement;
+using DataAccess.Repositories.Abstract.TaskManagement;
+using DataAccess.Repositories.Abstract.UserManagement;
 using Domain.DTOs.Communication;
 using Domain.Entities.Communication;
+using Microsoft.EntityFrameworkCore;
 
 namespace Business.Services.Communication.Concrete;
 
@@ -14,17 +22,63 @@ public class CommentManager : ICommentService
 {
     private readonly ICommentDal _commentDal = ServiceTool.GetService<ICommentDal>()!;
     private readonly IMapper _mapper = ServiceTool.GetService<IMapper>()!;
+    private readonly IDutyAccessDal _dutyAccessDal = ServiceTool.GetService<IDutyAccessDal>()!;
+    private readonly ITeamProjectDal _teamProjectDal = ServiceTool.GetService<ITeamProjectDal>()!;
+    private readonly IUserTeamDal _userTeamDal = ServiceTool.GetService<IUserTeamDal>()!;
+    private readonly ITeamDal _teamDal = ServiceTool.GetService<ITeamDal>()!;
+    private readonly IUserDal _userDal = ServiceTool.GetService<IUserDal>()!;
+    private readonly IDutyDal _dutyDal = ServiceTool.GetService<IDutyDal>()!;
 
     #region GetAll
-
-    public async Task<ServiceCollectionResult<CommentGetDto?>> GetAllAsync()
+    public async Task<ServiceCollectionResult<CommentGetDto?>> GetAllAsync(DutySortOptions? dutySortOptions)
     {
         var result = new ServiceCollectionResult<CommentGetDto?>();
 
         try
         {
             var comments = await _commentDal.GetAllAsync(x => x.IsDeleted == false);
-            var commentDto = _mapper.Map<List<CommentGetDto>>(comments);
+            var accessComments = new HashSet<Comment>();
+
+            if (AuthHelper.GetRole()!.Equals(UserRoles.Admin))
+            {
+                // convert ICollection<Comment> to HashSet<Comment>
+                accessComments = new HashSet<Comment>(comments);
+            }
+            else
+            {
+                var loggedInUserId = AuthHelper.GetUserId()!.Value;
+                var userTeams = await _userTeamDal.GetAllAsync(x => x.UserId == loggedInUserId && x.IsDeleted == false);
+                var allTeamProjects = await _teamProjectDal.GetAllAsync(x => x.IsDeleted == false);
+                var userTeamProjects = allTeamProjects.Where(x => userTeams.Any(y => y.TeamId == x.TeamId)).ToList();
+                var allDutyAccesses = await _dutyAccessDal.GetAllAsync(x => x.IsDeleted == false);
+                var userDutyAccesses = allDutyAccesses.Where(x => userTeamProjects.Any(y => y.Id == x.TeamProjectId)).ToList();
+                IList<Guid> dutyIds = userDutyAccesses.Select(x => x.DutyId).ToList();
+
+                var duties = await _dutyDal.GetAllAsync(x => dutyIds.Contains(x.Id) && x.IsDeleted == false);
+
+                foreach (var duty in duties)
+                {
+                    var xComments = await _commentDal.GetAllAsync(x => x.DutyId == duty.Id && x.IsDeleted == false);
+                    
+                    foreach (var comment in xComments)
+                        accessComments.Add(comment);
+                }
+                
+            }
+            
+            
+            var accessCommentsList = accessComments.ToList();
+            accessCommentsList = dutySortOptions switch
+            {
+                DutySortOptions.Title => accessCommentsList.OrderBy(x => x.Duty.Title).ToList(),
+                DutySortOptions.Status => accessCommentsList.OrderBy(x => x.Duty.Status).ToList(),
+                DutySortOptions.Priority => accessCommentsList.OrderBy(x => x.Duty.Priority).ToList(),
+                DutySortOptions.Reporter => accessCommentsList.OrderBy(x => x.Duty.ReporterId).ToList(),
+                DutySortOptions.DueDate => accessCommentsList.OrderBy(x => x.Duty.DueDate).ToList(),
+                _ => accessCommentsList
+            };
+
+            var commentDto = _mapper.Map<List<CommentGetDto>>(accessCommentsList);
             result.SetData(commentDto);
         }
         catch (ValidationException e)
@@ -38,8 +92,8 @@ public class CommentManager : ICommentService
 
         return result;
     }
-
     #endregion
+            
 
     #region GetById
 

@@ -13,7 +13,6 @@ public class AuthController : BaseController
     private readonly IAuthService _authService = ServiceTool.GetService<IAuthService>()!;
 
     #region login
-
     [HttpPost("login")]
     public async Task<IActionResult> Login([FromBody] LoginDto loginDto)
     {
@@ -32,11 +31,9 @@ public class AuthController : BaseController
             ? StatusCode(428, result) // 428 Precondition Required
             : Ok(result);
     }
-
     #endregion
 
     #region register
-
     [HttpPost("register")]
     public async Task<IActionResult> Register([FromBody] RegisterDto registerDto)
     {
@@ -50,11 +47,9 @@ public class AuthController : BaseController
 
         return Ok(result);
     }
-
     #endregion
 
     #region verify-mfa
-
     [HttpPost("verify-mfa")]
     public async Task<IActionResult> VerifyMfa([FromBody] VerifyMfaCodeDto verifyMfaCodeDto)
     {
@@ -68,11 +63,9 @@ public class AuthController : BaseController
 
         return Ok(result);
     }
-
     #endregion
 
     #region forgot-password
-
     [HttpPost("forgot-password")]
     public async Task<IActionResult> ForgotPassword([FromBody] ForgotPasswordDto forgotPasswordDto)
     {
@@ -86,11 +79,9 @@ public class AuthController : BaseController
 
         return Ok(result);
     }
-
     #endregion
 
     #region logout
-
     [HttpPost("logout")]
     [Authorize]
     public async Task<IActionResult> Logout(Guid userId)
@@ -102,6 +93,5 @@ public class AuthController : BaseController
 
         return Ok(result);
     }
-
     #endregion
 }

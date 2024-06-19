@@ -16,8 +16,7 @@ public class EfDbContextBase : DbContext
         // mysql connection string
         optionsBuilder.UseMySql("Server=127.0.0.1;Database=PMT;Uid=root;Pwd=da154679", _serverVersion);
     }
-
-
+    
     public override int SaveChanges()
     {
         OnBeforeSaveChanges();

@@ -11,7 +11,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace DataAccess.Migrations
 {
     [DbContext(typeof(EfDbContext))]
-    [Migration("20240614144352_Initial")]
+    [Migration("20240619190122_Initial")]
     partial class Initial
     {
         /// <inheritdoc />
@@ -21,6 +21,48 @@ namespace DataAccess.Migrations
             modelBuilder
                 .HasAnnotation("ProductVersion", "8.0.1")
                 .HasAnnotation("Relational:MaxIdentifierLength", 64);
+
+            modelBuilder.Entity("Domain.Entities.Association.DutyAccess", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("char(36)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<Guid?>("CreatedUserId")
+                        .HasColumnType("char(36)");
+
+                    b.Property<DateTime?>("DeletedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<Guid?>("DeletedUserId")
+                        .HasColumnType("char(36)");
+
+                    b.Property<Guid>("DutyId")
+                        .HasColumnType("char(36)");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("tinyint(1)");
+
+                    b.Property<Guid>("TeamProjectId")
+                        .HasColumnType("char(36)");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<Guid?>("UpdatedUserId")
+                        .HasColumnType("char(36)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("DutyId");
+
+                    b.HasIndex("TeamProjectId");
+
+                    b.ToTable("DutyAccesses");
+                });
 
             modelBuilder.Entity("Domain.Entities.Association.TeamProject", b =>
                 {
@@ -348,9 +390,6 @@ namespace DataAccess.Migrations
                         .HasMaxLength(127)
                         .HasColumnType("varchar(127)");
 
-                    b.Property<Guid?>("ProjectId")
-                        .HasColumnType("char(36)");
-
                     b.Property<string>("ResetPasswordCode")
                         .HasColumnType("longtext");
 
@@ -377,8 +416,6 @@ namespace DataAccess.Migrations
                         .HasColumnType("varchar(127)");
 
                     b.HasKey("Id");
-
-                    b.HasIndex("ProjectId");
 
                     b.ToTable("Users");
                 });
@@ -472,14 +509,8 @@ namespace DataAccess.Migrations
                         .HasMaxLength(127)
                         .HasColumnType("varchar(127)");
 
-                    b.Property<int>("Priority")
-                        .HasColumnType("int");
-
                     b.Property<Guid>("ProjectId")
                         .HasColumnType("char(36)");
-
-                    b.Property<int>("Status")
-                        .HasColumnType("int");
 
                     b.Property<DateTime?>("UpdatedAt")
                         .HasColumnType("datetime(6)");
@@ -524,19 +555,23 @@ namespace DataAccess.Migrations
                     b.ToTable("ProjectTeam");
                 });
 
-            modelBuilder.Entity("TeamUser", b =>
+            modelBuilder.Entity("Domain.Entities.Association.DutyAccess", b =>
                 {
-                    b.Property<Guid>("MembersId")
-                        .HasColumnType("char(36)");
+                    b.HasOne("Domain.Entities.DutyManagement.Duty", "Duty")
+                        .WithMany()
+                        .HasForeignKey("DutyId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
 
-                    b.Property<Guid>("ParticipatedTeamsId")
-                        .HasColumnType("char(36)");
+                    b.HasOne("Domain.Entities.Association.TeamProject", "TeamProject")
+                        .WithMany()
+                        .HasForeignKey("TeamProjectId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
 
-                    b.HasKey("MembersId", "ParticipatedTeamsId");
+                    b.Navigation("Duty");
 
-                    b.HasIndex("ParticipatedTeamsId");
-
-                    b.ToTable("TeamUser");
+                    b.Navigation("TeamProject");
                 });
 
             modelBuilder.Entity("Domain.Entities.Association.TeamProject", b =>
@@ -580,13 +615,13 @@ namespace DataAccess.Migrations
             modelBuilder.Entity("Domain.Entities.Association.UserTeam", b =>
                 {
                     b.HasOne("Domain.Entities.ProjectManagement.Team", "Team")
-                        .WithMany()
+                        .WithMany("Users")
                         .HasForeignKey("TeamId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.HasOne("Domain.Entities.DutyManagement.UserManagement.User", "User")
-                        .WithMany()
+                        .WithMany("Teams")
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -646,13 +681,6 @@ namespace DataAccess.Migrations
                     b.Navigation("Reporter");
                 });
 
-            modelBuilder.Entity("Domain.Entities.DutyManagement.UserManagement.User", b =>
-                {
-                    b.HasOne("Domain.Entities.ProjectManagement.Project", null)
-                        .WithMany("Users")
-                        .HasForeignKey("ProjectId");
-                });
-
             modelBuilder.Entity("Domain.Entities.ProjectManagement.Project", b =>
                 {
                     b.HasOne("Domain.Entities.DutyManagement.UserManagement.User", "Manager")
@@ -667,9 +695,9 @@ namespace DataAccess.Migrations
             modelBuilder.Entity("Domain.Entities.ProjectManagement.Team", b =>
                 {
                     b.HasOne("Domain.Entities.DutyManagement.UserManagement.User", "Manager")
-                        .WithMany("ManagedTeams")
+                        .WithMany()
                         .HasForeignKey("ManagerId")
-                        .OnDelete(DeleteBehavior.Restrict)
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.Navigation("Manager");
@@ -705,21 +733,6 @@ namespace DataAccess.Migrations
                         .IsRequired();
                 });
 
-            modelBuilder.Entity("TeamUser", b =>
-                {
-                    b.HasOne("Domain.Entities.DutyManagement.UserManagement.User", null)
-                        .WithMany()
-                        .HasForeignKey("MembersId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("Domain.Entities.ProjectManagement.Team", null)
-                        .WithMany()
-                        .HasForeignKey("ParticipatedTeamsId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-                });
-
             modelBuilder.Entity("Domain.Entities.Communication.Comment", b =>
                 {
                     b.Navigation("SubComments");
@@ -738,15 +751,18 @@ namespace DataAccess.Migrations
 
                     b.Navigation("ManagedProjects");
 
-                    b.Navigation("ManagedTeams");
-
                     b.Navigation("ReportedDuties");
+
+                    b.Navigation("Teams");
                 });
 
             modelBuilder.Entity("Domain.Entities.ProjectManagement.Project", b =>
                 {
                     b.Navigation("Duties");
+                });
 
+            modelBuilder.Entity("Domain.Entities.ProjectManagement.Team", b =>
+                {
                     b.Navigation("Users");
                 });
 #pragma warning restore 612, 618

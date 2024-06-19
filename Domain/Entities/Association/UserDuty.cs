@@ -4,6 +4,8 @@ using Domain.Entities.DutyManagement.UserManagement;
 
 namespace Domain.Entities.Association;
 
+// This association entity is used to create a many-to-many relationship between User and Duty entities. 
+// A duty can be assigned to multiple users and a user can have multiple duties.
 public class UserDuty : EntityBase
 {
     public Guid UserId { get; set; } // Foreign key referencing User.Id

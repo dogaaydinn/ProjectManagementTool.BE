@@ -43,7 +43,7 @@ public class EfSeeder : ISeeder
             LastName = "manager",
             PhoneNumber = "05452977501",
             UseMultiFactorAuthentication = false,
-            Email = "doga.aydin@arena.com.tr",
+            Email = "doga.aydin@testmail.com",
             EmailVerified = true,
             PhoneNumberVerified = true,
             Role = UserRoles.Admin,
@@ -964,7 +964,71 @@ public class EfSeeder : ISeeder
         context.SaveChanges();
 
         #endregion
-
+        
+        # region DutyAccess
+        
+        var dutyAccess1 = new DutyAccess
+        {
+            DutyId = duty1.Id,
+            TeamProjectId = tp1.Id,
+            CreatedUserId = admin.Id
+        };
+        
+        var dutyAccess2 = new DutyAccess
+        {
+            DutyId = duty2.Id,
+            TeamProjectId = tp2.Id,
+            CreatedUserId = admin.Id
+        };
+        
+        var dutyAccess3 = new DutyAccess
+        {
+            DutyId = duty3.Id,
+            TeamProjectId = tp3.Id,
+            CreatedUserId = admin.Id
+        };
+        
+        var dutyAccess4 = new DutyAccess
+        {
+            DutyId = duty4.Id,
+            TeamProjectId = tp4.Id,
+            CreatedUserId = admin.Id
+        };
+        
+        var dutyAccess5 = new DutyAccess
+        {
+            DutyId = duty5.Id,
+            TeamProjectId = tp5.Id,
+            CreatedUserId = admin.Id
+        };
+        
+        var dutyAccess6 = new DutyAccess
+        {
+            DutyId = duty6.Id,
+            TeamProjectId = tp6.Id,
+            CreatedUserId = admin.Id
+        };
+        
+        var dutyAccess7 = new DutyAccess
+        {
+            DutyId = duty7.Id,
+            TeamProjectId = tp7.Id,
+            CreatedUserId = admin.Id
+        };
+        
+        var dutyAccess8 = new DutyAccess
+        {
+            DutyId = duty8.Id,
+            TeamProjectId = tp8.Id,
+            CreatedUserId = admin.Id
+        };
+        
+        context.DutyAccesses.AddRange(dutyAccess1, dutyAccess2, dutyAccess3, dutyAccess4, dutyAccess5, dutyAccess6, dutyAccess7, dutyAccess8);
+    
+        context.SaveChanges();
+        
+        #endregion
+        
         #region UserDuties
 
         var userDuty1 = new UserDuty

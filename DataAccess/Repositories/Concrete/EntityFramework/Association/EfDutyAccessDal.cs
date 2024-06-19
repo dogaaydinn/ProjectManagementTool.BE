@@ -5,6 +5,7 @@ using Domain.Entities.Association;
 
 namespace DataAccess.Repositories.Concrete.EntityFramework.Association;
 
-public class EfDutyProjectDal : EfEntityRepository<TeamProject, EfDbContext>, IDutyProjectDal
+public class EfDutyAccessDal : EfEntityRepository<DutyAccess, EfDbContext>, IDutyAccessDal
 {
+    
 }

@@ -21,6 +21,7 @@ public sealed class EfDbContext : EfDbContextBase
 
     public DbSet<TeamProject> TeamProjects { get; set; }
     public DbSet<Duty> Duties { get; set; }
+    public DbSet<DutyAccess> DutyAccesses { get; set; }
 
     public DbSet<User> Users { get; set; }
     public DbSet<UserDuty> UserDuties { get; set; }
@@ -103,6 +104,16 @@ public sealed class EfDbContext : EfDbContextBase
         modelBuilder.Entity<User>()
             .Property(u => u.FirstName)
             .IsRequired();
+
+        modelBuilder.Entity<UserTeam>()
+            .HasOne(ut => ut.User)
+            .WithMany(u => u.Teams)
+            .HasForeignKey(ut => ut.UserId); // Configures the relationship from UserTeam to User
+
+        modelBuilder.Entity<UserTeam>()
+            .HasOne(ut => ut.Team)
+            .WithMany(t => t.Users)
+            .HasForeignKey(ut => ut.TeamId); // Configures the relationship from UserTeam to Team
     }
 
 

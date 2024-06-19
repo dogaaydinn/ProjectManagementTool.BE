@@ -1,4 +1,4 @@
-namespace Core.Constants.Duty;
+namespace Core.Constants;
 
 public enum Priority
 {

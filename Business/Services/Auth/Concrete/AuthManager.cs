@@ -3,11 +3,13 @@ using AutoMapper;
 using Business.Constants.Messages.Services.Communication;
 using Business.Services.Auth.Abstract;
 using Business.Services.Communication.Abstract;
+using Core.Constants;
 using Core.ExceptionHandling;
 using Core.Security.SessionManagement;
 using Core.Services.Messages;
 using Core.Services.Payload;
 using Core.Services.Result;
+using Core.Utils.Auth;
 using Core.Utils.Hashing;
 using Core.Utils.IoC;
 using Core.Utils.Rules;
@@ -109,12 +111,13 @@ public class AuthManager : IAuthService
 
         try
         {
+            /*
             BusinessRules.Run(
                 ("AUTH-310832", BusinessRules.CheckDtoNull(registerDto)),
                 ("AUTH-906899", BusinessRules.CheckEmail(registerDto.Email)),
                 ("AUTH-712957", await CheckIfEmailRegisteredBefore(registerDto.Email)),
                 ("AUTH-770711", await CheckIfUsernameRegisteredBefore(registerDto.Username))
-            );
+            );*/
 
             HashingHelper.CreatePasswordHash(registerDto.Password, out var passwordHash,
                 out var passwordSalt);
@@ -249,6 +252,15 @@ public class AuthManager : IAuthService
         {
             var user = await _userDal.GetAsync(p => p.Id.Equals(userId));
             BusinessRules.Run(("AUTH-808079", BusinessRules.CheckEntityNull(user)));
+
+            var loggedInUser = AuthHelper.GetUserId();
+            var isAdmin = AuthHelper.GetRole()!.Equals(UserRoles.Admin);
+            
+            if (loggedInUser != userId && !isAdmin)
+            {
+                result.Fail(new ErrorMessage("AUTH-808079", AuthServiceMessages.Unauthorized));
+                return result;
+            }
 
             user!.ActiveToken = null;
             await _userDal.UpdateAsync(user);

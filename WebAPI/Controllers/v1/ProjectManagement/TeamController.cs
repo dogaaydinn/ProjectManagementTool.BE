@@ -1,6 +1,7 @@
 using Business.Services.ProjectManagement.Abstract;
 using Core.Api.Abstract;
 using Core.Constants;
+using Core.Constants.SortOptions;
 using Core.Utils.IoC;
 using Domain.DTOs.ProjectManagement;
 using Microsoft.AspNetCore.Authorization;
@@ -14,7 +15,6 @@ public class TeamController : BaseController
     private readonly ITeamService _teamService = ServiceTool.GetService<ITeamService>()!;
 
     #region GetAll
-
     [HttpGet]
     public async Task<IActionResult> GetAll(TeamSortOptions? teamSortOptions)
     {
@@ -25,11 +25,9 @@ public class TeamController : BaseController
 
         return Ok(result);
     }
-
     #endregion
 
     #region GetById
-
     [HttpGet("{id:guid}")]
     public async Task<IActionResult> GetById(Guid id)
     {
@@ -40,56 +38,61 @@ public class TeamController : BaseController
 
         return Ok(result);
     }
-
     #endregion
 
     #region GetTeamByManagerId
-
     [HttpGet("manager/{id:guid}")]
-    public async Task<IActionResult> GetTeamByManagerId(Guid id)
+    public async Task<IActionResult> GetTeamByManagerId(Guid id, TeamSortOptions? teamSortOptions)
     {
-        var result = await _teamService.GetTeamByManagerIdAsync(id);
+        var result = await _teamService.GetTeamByManagerIdAsync(id, teamSortOptions);
 
         if (result.HasFailed)
             return BadRequest();
 
         return Ok(result);
     }
-
     #endregion
 
     #region GetTeamByProjectId
-
     [HttpGet("project/{id:guid}")]
-    public async Task<IActionResult> GetTeamByProjectId(Guid id)
+    public async Task<IActionResult> GetTeamByProjectId(Guid id, TeamSortOptions? teamSortOptions)
     {
-        var result = await _teamService.GetTeamByProjectIdAsync(id);
+        var result = await _teamService.GetTeamByProjectIdAsync(id, teamSortOptions);
 
         if (result.HasFailed)
             return BadRequest();
 
         return Ok(result);
     }
-
     #endregion
 
     #region GetTeamByName
-
     [HttpGet("name/{name}")]
-    public async Task<IActionResult> GetTeamByName(string name)
+    public async Task<IActionResult> GetTeamByName(string name, TeamSortOptions? teamSortOptions)
     {
-        var result = await _teamService.GetTeamByNameAsync(name);
+        var result = await _teamService.GetTeamByNameAsync(name, teamSortOptions);
 
         if (result.HasFailed)
             return BadRequest();
 
         return Ok(result);
     }
+    #endregion
 
+    #region AssignUsersToTeam
+    [HttpPost("assign-user")]
+    public async Task<IActionResult> AssignUsersToTeam([FromBody] AssignUsersToTeamDto assignUsersToTeamDto)
+    {
+        var result = await _teamService.AssignUsersToTeamAsync(assignUsersToTeamDto);
+
+        if (result.HasFailed)
+            return BadRequest();
+
+        return Ok(result);
+    }
     #endregion
 
     #region Update
-
     [HttpPut]
     public async Task<IActionResult> Update([FromBody] TeamUpdateDto teamUpdateDto)
     {
@@ -100,11 +103,9 @@ public class TeamController : BaseController
 
         return Ok(result);
     }
-
     #endregion
 
     #region Create
-
     [HttpPost]
     public async Task<IActionResult> Create([FromBody] TeamCreateDto teamCreateDto)
     {
@@ -115,11 +116,9 @@ public class TeamController : BaseController
 
         return Ok(result);
     }
-
     #endregion
 
     #region DeleteById
-
     [HttpDelete("{id:guid}")]
     public async Task<IActionResult> DeleteById(Guid id)
     {
@@ -130,8 +129,5 @@ public class TeamController : BaseController
 
         return Ok(result);
     }
-
     #endregion
-    
-    // TODO: Assign user to team
 }

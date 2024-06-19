@@ -26,7 +26,7 @@ public class BusinessModule : IDependencyInjectionModule
 
         # region DutyManagement
 
-        services.AddScoped<IDutyService, DutyManager>();
+        //services.AddScoped<IDutyService, DutyManager>();
         services.AddScoped<IUserService, UserManager>();
 
         # endregion DutyManagement

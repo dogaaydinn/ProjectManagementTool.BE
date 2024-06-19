@@ -35,7 +35,7 @@ public class DataAccessModule : IDependencyInjectionModule
         services.AddScoped<IUserDal, EfUserDal>();
         services.AddScoped<IUserDutyDal, EfUserDutyDal>();
         services.AddScoped<ICommentDal, EfCommentDal>();
-        services.AddScoped<IDutyDal, EfDutyDal>();
+        services.AddScoped<IDutyAccessDal, EfDutyAccessDal>();
         services.AddScoped<IUserTeamDal, EfUserTeamDal>();
 
         #endregion Repositories

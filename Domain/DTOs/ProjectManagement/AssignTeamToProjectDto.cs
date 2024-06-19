@@ -2,8 +2,8 @@ using Core.Domain.Abstract;
 
 namespace Domain.DTOs.ProjectManagement;
 
-public class AssignUserToProjectDto : IDto
+public class AssignTeamToProjectDto : IDto
 {
     public Guid ProjectId { get; set; }
-    public Guid UserId { get; set; }
+    public Guid TeamId { get; set; }
 }

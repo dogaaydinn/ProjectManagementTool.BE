@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using Core.Constants;
 using Core.Constants.Duty;
 using Core.Domain.Abstract;
 using Domain.Entities.Communication;

@@ -18,9 +18,10 @@ public class CommentProfile : Profile
         CreateMap<CommentUpdateDto, Comment>()
             .ForAllMembers(opts => opts.Condition((src, dest, srcMember, destMember, context) =>
             {
-                if (opts.DestinationMember.Name == "DutyId" || opts.DestinationMember.Name == "ReplyToId")
-                    if (srcMember is Guid guid)
-                        return guid != Guid.Empty;
+                if (opts.DestinationMember.Name != "DutyId" && opts.DestinationMember.Name != "ReplyToId")
+                    return srcMember != null;
+                if (srcMember is Guid guid)
+                    return guid != Guid.Empty;
                 return srcMember != null;
             }));
     }

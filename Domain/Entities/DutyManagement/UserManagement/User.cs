@@ -1,5 +1,7 @@
 using System.ComponentModel.DataAnnotations;
+using Core.Constants;
 using Core.Domain.Abstract;
+using Domain.Entities.Association;
 using Domain.Entities.Communication;
 using Domain.Entities.ProjectManagement;
 
@@ -14,13 +16,10 @@ public class User : EntityBase
     [StringLength(127)] public string Email { get; set; }
     public byte[] PasswordHash { get; set; } = null!;
     public byte[] PasswordSalt { get; set; } = null!;
-    [StringLength(15)] public string Role { get; set; }
+    [StringLength(15)] public string Role { get; set; } = UserRoles.User;
 
     public virtual ICollection<Duty>
         AssignedDuties { get; set; } // Navigation property for many-to-many relationship with Task
-
-    public virtual ICollection<Team>
-        ParticipatedTeams { get; set; } // Navigation property for many-to-many relationship with Team
 
     public virtual ICollection<Project>
         ManagedProjects { get; set; } // Navigation property for one-to-many relationship with Project
@@ -41,4 +40,6 @@ public class User : EntityBase
     public virtual ICollection<Duty> ReportedDuties { get; set; }
     public string? ResetPasswordCode { get; set; }
     public DateTime? ResetPasswordCodeExpiration { get; set; }
+
+    public virtual ICollection<UserTeam> Teams { get; set; } = new List<UserTeam>();
 }
