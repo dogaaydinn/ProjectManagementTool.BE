@@ -1,7 +1,9 @@
 using Business.Services.DutyManagement.Abstract;
 using Core.Api.Abstract;
 using Core.Constants;
+using Core.Constants.AuthPolicies;
 using Core.Constants.Duty;
+using Core.Constants.SortOptions;
 using Core.Utils.IoC;
 using Domain.DTOs.DutyManagement;
 using Microsoft.AspNetCore.Authorization;
@@ -13,9 +15,10 @@ namespace WebAPI.Controllers.v1.DutyManagement;
 public class DutyController : BaseController
 {
     private readonly IDutyService _dutyService = ServiceTool.GetService<IDutyService>()!;
-/*
+
     // TODO: Duty için sıralama seçenekleri eklenecek.
     #region GetAll
+    [Authorize(Policy = AuthPolicies.AdminOnly)]
     [HttpGet]
     public async Task<IActionResult> GetAll(DutySortOptions? dutySortOptions)
     {
@@ -43,11 +46,37 @@ public class DutyController : BaseController
 
     #endregion
 
-    #region GetByUserId
-    [HttpGet("user/{userId:guid}")]
-    public async Task<IActionResult> GetByUserId(Guid userId, DutySortOptions? dutySortOptions)
+    #region GetByReporterId
+    [HttpGet("reporter/{reporterId:guid}")]
+    public async Task<IActionResult> GetByReporterId(Guid reporterId, DutySortOptions? dutySortOptions)
     {
-        var result = await _dutyService.GetByUserIdAsync(userId, dutySortOptions);
+        var result = await _dutyService.GetByReporterIdAsync(reporterId, dutySortOptions);
+
+        if (result.HasFailed)
+            return BadRequest();
+
+        return Ok(result);
+    }
+    #endregion
+
+    #region GetByAssigneeId
+    [HttpGet("assignee/{assigneeId:guid}")]
+    public async Task<IActionResult> GetByAssigneeId(Guid assigneeId, DutySortOptions? dutySortOptions)
+    {
+        var result = await _dutyService.GetByAssigneeIdAsync(assigneeId, dutySortOptions);
+
+        if (result.HasFailed)
+            return BadRequest();
+
+        return Ok(result);
+    }
+    #endregion
+
+    #region GetByManagerId
+    [HttpGet("manager/{managerId:guid}")]
+    public async Task<IActionResult> GetByManagerId(Guid managerId,DutySortOptions? dutySortOptions)
+    {
+        var result = await _dutyService.GetByManagerIdAsync(managerId, dutySortOptions);
 
         if (result.HasFailed)
             return BadRequest();
@@ -58,9 +87,9 @@ public class DutyController : BaseController
 
     #region GetByTitle
     [HttpGet("title/{title}")]
-    public async Task<IActionResult> GetByTitle(string title, DutySortOptions? dutySortOptions)
+    public async Task<IActionResult> GetByTitle(string title)
     {
-        var result = await _dutyService.GetByTitleAsync(title, dutySortOptions);
+        var result = await _dutyService.GetByTitleAsync(title);
 
         if (result.HasFailed)
             return BadRequest();
@@ -71,10 +100,9 @@ public class DutyController : BaseController
 
     #region GetByProjectId
     [HttpGet("project/{projectId:guid}")]
-    public async Task<IActionResult> GetByProjectId(Guid projectId, DutySortOptions? dutySortOptions)
+    public async Task<IActionResult> GetByProjectId(Guid projectId)
     {
-        var result = await _dutyService.GetByProjectIdAsync(projectId, dutySortOptions);
-
+        var result = await _dutyService.GetByProjectIdAsync(projectId);
         if (result.HasFailed)
             return BadRequest();
 
@@ -108,32 +136,6 @@ public class DutyController : BaseController
     }
     #endregion
 
-    #region GetByReporterId
-    [HttpGet("reporter/{reporterId:guid}")]
-    public async Task<IActionResult> GetByReporterId(Guid reporterId, DutySortOptions? dutySortOptions)
-    {
-        var result = await _dutyService.GetByReporterIdAsync(reporterId, dutySortOptions);
-
-        if (result.HasFailed)
-            return BadRequest();
-
-        return Ok(result);
-    }
-    #endregion
-
-    #region GetByAssigneeId
-    [HttpGet("assignee/{assigneeId:guid}")]
-    public async Task<IActionResult> GetByAssigneeId(Guid assigneeId, DutySortOptions? dutySortOptions)
-    {
-        var result = await _dutyService.GetByAssigneeIdAsync(assigneeId, dutySortOptions);
-
-        if (result.HasFailed)
-            return BadRequest();
-
-        return Ok(result);
-    }
-    #endregion
-
     #region GetByDutyType
     [HttpGet("dutyType/{dutyType}")]
     public async Task<IActionResult> GetByDutyType(DutyType dutyType, DutySortOptions? dutySortOptions)
@@ -146,22 +148,7 @@ public class DutyController : BaseController
         return Ok(result);
     }
     #endregion
-
-    // TODO: RemoveDTO yaz
-    #region RemoveDutyFromProject
-
-    [HttpDelete("project/{projectId:guid}")]
-    public async Task<IActionResult> RemoveDutyFromProject([FromBody] RemoveDutyFromProjectDto removeDutyFromProjectDto)
-    {
-        var result = await _dutyService.RemoveDutyFromProjectAsync(removeDutyFromProjectDto);
-
-        if (result.HasFailed)
-            return BadRequest();
-
-        return Ok(result);
-    }
-
-    #endregion
+    
 
     #region Update
 
@@ -211,5 +198,5 @@ public class DutyController : BaseController
     }
 
     #endregion
-    */
+    
 }

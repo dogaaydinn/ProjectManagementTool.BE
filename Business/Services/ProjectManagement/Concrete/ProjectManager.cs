@@ -119,7 +119,6 @@ public class ProjectManager : IProjectService
 
     #endregion
 
-
     #region GetByIdAsync
     public async Task<ServiceObjectResult<ProjectGetDto?>> GetByIdAsync(Guid id)
     {
@@ -289,6 +288,79 @@ public class ProjectManager : IProjectService
     catch (Exception e)
     {
         result.Fail(new ErrorMessage("PRJM-112134", e.Message));
+    }
+
+    return result;
+}
+    #endregion
+    
+    #region GetProjectByStatusAsync
+   public async Task<ServiceCollectionResult<ProjectGetDto?>> GetProjectByStatusAsync(int status, ProjectSortOptions? projectSortOptions)
+{
+    var result = new ServiceCollectionResult<ProjectGetDto?>();
+
+    try
+    {
+        var projects = await _projectDal.GetAllAsync(p => (int)p.Status == status && p.IsDeleted == false);
+
+        var accessProjects = new HashSet<Project>();
+
+        if (AuthHelper.GetRole()!.Equals(UserRoles.Admin))
+        {
+            accessProjects = projects.ToHashSet();
+        }
+        else
+        {
+            var loggedInUserId = AuthHelper.GetUserId()!.Value;
+
+            var userTeams = await _userTeamDal.GetAllAsync(ut => ut.UserId == loggedInUserId);
+            foreach (var userTeam in userTeams)
+            {
+                var teamProjects = await _teamProjectDal.GetAllAsync(tp => tp.TeamId == userTeam.TeamId);
+                foreach (var teamProject in teamProjects)
+                {
+                    var project = projects.FirstOrDefault(p => p.Id == teamProject.ProjectId);
+                    if (project != null) accessProjects.Add(project);
+                }
+            }
+
+            var userProjects = projects.Where(p => p.ManagerId == loggedInUserId);
+            foreach (var userProject in userProjects) accessProjects.Add(userProject);
+        }
+
+        if (accessProjects.Count == 0)
+        {
+            result.SetError("PRJM-789658", "No projects found");
+            return result;
+        }
+
+        var accessProjectsList = accessProjects.ToList();
+
+        // Apply sorting
+        accessProjectsList = projectSortOptions switch
+        {
+            ProjectSortOptions.Name => accessProjectsList.OrderBy(p => p.Name).ToList(),
+            ProjectSortOptions.Priority => accessProjectsList.OrderBy(p => p.Priority).ToList(),
+            ProjectSortOptions.Status => accessProjectsList.OrderBy(p => p.Status).ToList(),
+            ProjectSortOptions.DueDate => accessProjectsList.OrderBy(p => p.DueDate).ToList(),
+            _ => accessProjectsList
+        };
+
+        // Check if any projects were found
+        BusinessRules.Run(
+            ("PRJM-958473", BusinessRules.CheckCollectionNullOrEmpty(accessProjectsList, "No projects found"))
+        );
+
+        var projectDto = _mapper.Map<List<ProjectGetDto>>(accessProjectsList);
+        result.SetData(projectDto);
+    }
+    catch (ValidationException validationException)
+    {
+        result.Fail(validationException);
+    }
+    catch (Exception exception)
+    {
+        result.Fail(new ErrorMessage("PRJM-958473", exception.Message));
     }
 
     return result;
@@ -614,77 +686,5 @@ public class ProjectManager : IProjectService
     }
     #endregion
 
-    #region GetProjectByStatusAsync
-   public async Task<ServiceCollectionResult<ProjectGetDto?>> GetProjectByStatusAsync(int status, ProjectSortOptions? projectSortOptions)
-{
-    var result = new ServiceCollectionResult<ProjectGetDto?>();
 
-    try
-    {
-        var projects = await _projectDal.GetAllAsync(p => (int)p.Status == status && p.IsDeleted == false);
-
-        var accessProjects = new HashSet<Project>();
-
-        if (AuthHelper.GetRole()!.Equals(UserRoles.Admin))
-        {
-            accessProjects = projects.ToHashSet();
-        }
-        else
-        {
-            var loggedInUserId = AuthHelper.GetUserId()!.Value;
-
-            var userTeams = await _userTeamDal.GetAllAsync(ut => ut.UserId == loggedInUserId);
-            foreach (var userTeam in userTeams)
-            {
-                var teamProjects = await _teamProjectDal.GetAllAsync(tp => tp.TeamId == userTeam.TeamId);
-                foreach (var teamProject in teamProjects)
-                {
-                    var project = projects.FirstOrDefault(p => p.Id == teamProject.ProjectId);
-                    if (project != null) accessProjects.Add(project);
-                }
-            }
-
-            var userProjects = projects.Where(p => p.ManagerId == loggedInUserId);
-            foreach (var userProject in userProjects) accessProjects.Add(userProject);
-        }
-
-        if (accessProjects.Count == 0)
-        {
-            result.SetError("PRJM-789658", "No projects found");
-            return result;
-        }
-
-        var accessProjectsList = accessProjects.ToList();
-
-        // Apply sorting
-        accessProjectsList = projectSortOptions switch
-        {
-            ProjectSortOptions.Name => accessProjectsList.OrderBy(p => p.Name).ToList(),
-            ProjectSortOptions.Priority => accessProjectsList.OrderBy(p => p.Priority).ToList(),
-            ProjectSortOptions.Status => accessProjectsList.OrderBy(p => p.Status).ToList(),
-            ProjectSortOptions.DueDate => accessProjectsList.OrderBy(p => p.DueDate).ToList(),
-            _ => accessProjectsList
-        };
-
-        // Check if any projects were found
-        BusinessRules.Run(
-            ("PRJM-958473", BusinessRules.CheckCollectionNullOrEmpty(accessProjectsList, "No projects found"))
-        );
-
-        var projectDto = _mapper.Map<List<ProjectGetDto>>(accessProjectsList);
-        result.SetData(projectDto);
-    }
-    catch (ValidationException validationException)
-    {
-        result.Fail(validationException);
-    }
-    catch (Exception exception)
-    {
-        result.Fail(new ErrorMessage("PRJM-958473", exception.Message));
-    }
-
-    return result;
-}
-    #endregion
-    
 }

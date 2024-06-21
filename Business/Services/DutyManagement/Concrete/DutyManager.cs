@@ -1,5 +1,4 @@
 using AutoMapper;
-using Business.Services.Auth.Concrete;
 using Business.Services.DutyManagement.Abstract;
 using Core.Constants;
 using Core.Constants.Duty;
@@ -18,7 +17,7 @@ using Domain.Entities.DutyManagement;
 
 namespace Business.Services.DutyManagement.Concrete;
 
-public class DutyManager //: IDutyService
+public class DutyManager : IDutyService
 {
     private readonly IDutyDal _dutyDal = ServiceTool.GetService<IDutyDal>()!;
     private readonly IMapper _mapper = ServiceTool.GetService<IMapper>()!;
@@ -26,40 +25,23 @@ public class DutyManager //: IDutyService
     private readonly IUserDal _userDal = ServiceTool.GetService<IUserDal>()!;
     private readonly ITeamProjectDal _teamProjectDal = ServiceTool.GetService<ITeamProjectDal>()!;
     private readonly IUserDutyDal _userDutyDal = ServiceTool.GetService<IUserDutyDal>()!;
+    private readonly IUserTeamDal _userTeamDal = ServiceTool.GetService<IUserTeamDal>()!;
+    private readonly IDutyAccessDal _dutyAccessDal = ServiceTool.GetService<IDutyAccessDal>()!;
     
-    #region GetAll
     //adar bana .net user secret göstericek
     //sort option
     //debug
     //project teame duty ekleme
     //subduty parent duty
+    
+    #region GetAll
     public async Task<ServiceCollectionResult<DutyGetDto?>> GetAllAsync(DutySortOptions? dutySortOptions)
     {
         var result = new ServiceCollectionResult<DutyGetDto?>();
 
         try
         {
-            var duties = await _dutyDal.GetAllAsync(d => d.IsDeleted == false);
-            var accessDuties = new HashSet<Duty>();
-            
-            
-            if(AuthHelper.GetRole()!.Equals(UserRoles.Admin))
-            {            
-               accessDuties = duties.ToHashSet();
-            }
-            else
-            {
-                var loggedInUserId = AuthHelper.GetUserId()!.Value;
-                var userDuties = await _userDutyDal.GetAllAsync(ud => ud.UserId == loggedInUserId);
-                foreach (var userDuty in userDuties)
-                {
-                    var duty = duties.FirstOrDefault(d => d.Id == userDuty.DutyId);
-                    if (duty != null) 
-                        accessDuties.Add(duty);
-                }
-            }
-
-            var accessDutiesList = accessDuties.ToList();
+            var accessDutiesList = await _dutyDal.GetAllAsync(d => d.IsDeleted == false);
 
             // Apply sorting
             accessDutiesList = dutySortOptions switch
@@ -68,7 +50,7 @@ public class DutyManager //: IDutyService
                 DutySortOptions.Priority => accessDutiesList.OrderBy(d => d.Priority).ToList(),
                 DutySortOptions.Status => accessDutiesList.OrderBy(d => d.Status).ToList(),
                 DutySortOptions.DueDate => accessDutiesList.OrderBy(d => d.DueDate).ToList(),
-                DutySortOptions.Assignee => accessDutiesList.OrderBy(d => d.AssignedUsers.Count).ToList(),
+                DutySortOptions.Assignee => accessDutiesList.OrderBy(d => d.AssignedUsers?.Count ?? 0).ToList(),
                 DutySortOptions.Reporter => accessDutiesList.OrderBy(d => d.ReporterId).ToList(),
                 _ => accessDutiesList
             };
@@ -90,10 +72,9 @@ public class DutyManager //: IDutyService
     #endregion
 
     //TODO: parentduty, subduty
+    // TODO: Debug gerekli
     
-
     #region GetById
-
     public async Task<ServiceObjectResult<DutyGetDto?>> GetByIdAsync(Guid id)
     {
         var result = new ServiceObjectResult<DutyGetDto?>();
@@ -101,35 +82,45 @@ public class DutyManager //: IDutyService
         try
         {
             var duty = await _dutyDal.GetAsync(d => d.Id == id && d.IsDeleted == false);
-            var loggedInUserId = AuthHelper.GetUserId();
 
-            var userDuties = await _userDutyDal.GetAllAsync(ud => ud.UserId == loggedInUserId);
+            if (duty == null)
+            {
+                result.Fail(new ErrorMessage("DUTY-432894", "Duty not found"));
+                return result;
+            }
 
-            bool hasAccess;
+            var loggedInUserId = AuthHelper.GetUserId();        
+            var hasAccess = false;
 
-            // Check if the logged in user is the manager of the project that the duty belongs to,
-            // or if they are the reporter and creator of the duty,
-            // or if they are an assignee of the duty.
-            if (AuthHelper.GetRole() == UserRoles.Admin)
+            if (AuthHelper.GetRole()!.Equals(UserRoles.Admin))
             {
                 hasAccess = true;
             }
             else
             {
-                hasAccess = duty != null && (duty.Project.ManagerId == loggedInUserId ||
-                                             duty.ReporterId == loggedInUserId ||
-                                             duty.AssignedUsers.Any(u => u.Id == loggedInUserId) ||
-                                             userDuties.Any(ud => ud.DutyId == duty.Id));
-            }
-            
-            if (!hasAccess)
-            {
-                result.Fail(new ErrorMessage("DUTY-432894", "You do not have access to view this duty"));
-                return result;
+                var dutyAccesses = await _dutyAccessDal.GetAllAsync(x => x.IsDeleted == false && x.DutyId == duty.Id);
+                var teamProjects = dutyAccesses.Select(x => x.TeamProject).ToList();
+                var teamIds = teamProjects.Select(x => x.TeamId).ToList();
+
+                foreach (var teamId in teamIds)
+                {
+                    var userTeams = await _userTeamDal.GetAllAsync(x =>
+                        x.UserId == loggedInUserId && x.IsDeleted == false && x.TeamId == teamId);
+                    if (userTeams.Count <= 0) continue;
+                    hasAccess = true;
+                    break;
+                }
             }
 
+            if (!hasAccess)
+            {
+                result.Fail(new ErrorMessage("DUTY-432894", "Access denied"));
+                return result;
+            }
+            
             var dutyDto = _mapper.Map<DutyGetDto>(duty);
             result.SetData(dutyDto);
+            
         }
         catch (ValidationException e)
         {
@@ -143,46 +134,75 @@ public class DutyManager //: IDutyService
         return result;
     }
     #endregion
+    
+    #region GetByReporterId
+        public async Task<ServiceCollectionResult<DutyGetDto?>> GetByReporterIdAsync(Guid reporterId, DutySortOptions? dutySortOptions)
+        {
+            var result = new ServiceCollectionResult<DutyGetDto?>();
 
+            try
+            {
+                var duties = await _dutyDal.GetAllAsync(d => d.ReporterId == reporterId && d.IsDeleted == false);
+                var accessDuties = duties;
+                
+                var accessDutiesList = accessDuties.ToList();
+                // Apply sorting
+                accessDutiesList = dutySortOptions switch
+                {
+                    DutySortOptions.Title => accessDutiesList.OrderBy(d => d.Title).ToList(),
+                    DutySortOptions.Priority => accessDutiesList.OrderBy(d => d.Priority).ToList(),
+                    DutySortOptions.Status => accessDutiesList.OrderBy(d => d.Status).ToList(),
+                    DutySortOptions.DueDate => accessDutiesList.OrderBy(d => d.DueDate).ToList(),
+                    DutySortOptions.Assignee => accessDutiesList.OrderBy(d => d.AssignedUsers?.Count ?? 0).ToList(),
+                    DutySortOptions.Reporter => accessDutiesList.OrderBy(d => d.ReporterId).ToList(),
+                    _ => accessDutiesList
+                };
+                
+                var dutyDto = _mapper.Map<List<DutyGetDto>>(accessDutiesList);
+                result.SetData(dutyDto);
+            }
+            catch (ValidationException e)
+            {
+                result.Fail(e);
+            }
+            catch (Exception e)
+            {
+                result.Fail(new ErrorMessage("DUTY-212122", e.Message));
+            }
 
-    #region GetByUserId
-    public async Task<ServiceCollectionResult<DutyGetDto?>> GetByUserIdAsync(Guid userId)
+            return result;
+        }
+        #endregion
+
+    #region GetByManagerId
+     public async Task<ServiceCollectionResult<DutyGetDto?>> GetByManagerIdAsync(DutySortOptions? dutySortOptions)
     {
         var result = new ServiceCollectionResult<DutyGetDto?>();
 
         try
         {
-            /*
             var loggedInUserId = AuthHelper.GetUserId()!.Value;
-            var hasAccess = loggedInUserId == managerId || AuthHelper.GetRole()!.Equals(UserRoles.Admin);
-            if (!hasAccess)
+            
+            var projects = await _projectDal.GetAllAsync(p => p.ManagerId == loggedInUserId && p.IsDeleted == false);
+            var projectIds = projects.Select(p => p.Id).ToList();
+            var duties = await _dutyDal.GetAllAsync(d => projectIds.Contains(d.ProjectId) && d.IsDeleted == false);
+            var accessDuties = duties;
+            
+            var accessDutiesList = accessDuties.ToList();
+            // Apply sorting
+            accessDutiesList = dutySortOptions switch
             {
-                result.Fail(new ErrorMessage("DUTY-328576", "Unauthorized access"));
-                return result;
-            }
+                DutySortOptions.Title => accessDutiesList.OrderBy(d => d.Title).ToList(),
+                DutySortOptions.Priority => accessDutiesList.OrderBy(d => d.Priority).ToList(),
+                DutySortOptions.Status => accessDutiesList.OrderBy(d => d.Status).ToList(),
+                DutySortOptions.DueDate => accessDutiesList.OrderBy(d => d.DueDate).ToList(),
+                DutySortOptions.Assignee => accessDutiesList.OrderBy(d => d.AssignedUsers?.Count ?? 0).ToList(),
+                DutySortOptions.Reporter => accessDutiesList.OrderBy(d => d.ReporterId).ToList(),
+                _ => accessDutiesList
+            };
             
-            var duties = await _dutyDal.GetAllAsync(d => d.Project != null &&
-                                                         d.IsDeleted == false &&
-                                                         ((d.ReporterId == userId && d.ReporterId == userId) ||
-                                                          d.Project.ManagerId == userId ));
-
-            
-
-            var duties = await _dutyDal.GetAllAsync(d => d.IsDeleted == false &&
-                                                         ((d.ReporterId == userId && d.ReporterId == userId) ||
-                                                          d.Project.ManagerId == userId ||
-                                                          d.AssignedUsers.Any(u => u.Id == userId)));
-
-            if (!duties.Any())
-            {
-                result.Fail(new ErrorMessage("DUTY-328576", "No duties found"));
-                return result;
-            }
-            
-            
-            var dutyDto = _mapper.Map<List<DutyGetDto>>(duties);
+            var dutyDto = _mapper.Map<List<DutyGetDto>>(accessDutiesList);
             result.SetData(dutyDto);
-            */
         }
         catch (ValidationException e)
         {
@@ -190,38 +210,80 @@ public class DutyManager //: IDutyService
         }
         catch (Exception e)
         {
-            result.Fail(new ErrorMessage("DUTY-328576", e.Message));
+            result.Fail(new ErrorMessage("DUTY-212122", e.Message));
+        }
+
+        return result;
+    }
+    #endregion
+
+    #region GetByAssigneeId
+
+    public async Task<ServiceCollectionResult<DutyGetDto?>> GetByAssigneeIdAsync(Guid assigneeId,DutySortOptions? dutySortOptions)
+    {
+        var result = new ServiceCollectionResult<DutyGetDto?>();
+
+        try
+        {  var loggedInUserId = AuthHelper.GetUserId()!.Value;
+        
+            var userDuties = await _userDutyDal.GetAllAsync(x => x.UserId == assigneeId && x.IsDeleted == false);
+            var dutyIds = userDuties.Select(d => d.DutyId).ToList();
+            var duties = await _dutyDal.GetAllAsync(d => dutyIds.Contains(d.Id) && d.IsDeleted == false);
+            var accessDuties = duties;
+        
+            var accessDutiesList = accessDuties.ToList();
+            // Apply sorting
+            accessDutiesList = dutySortOptions switch
+            {
+                DutySortOptions.Title => accessDutiesList.OrderBy(d => d.Title).ToList(),
+                DutySortOptions.Priority => accessDutiesList.OrderBy(d => d.Priority).ToList(),
+                DutySortOptions.Status => accessDutiesList.OrderBy(d => d.Status).ToList(),
+                DutySortOptions.DueDate => accessDutiesList.OrderBy(d => d.DueDate).ToList(),
+                DutySortOptions.Assignee => accessDutiesList.OrderBy(d => d.AssignedUsers?.Count ?? 0).ToList(),
+                DutySortOptions.Reporter => accessDutiesList.OrderBy(d => d.ReporterId).ToList(),
+                _ => accessDutiesList
+            };
+        
+            var dutyDto = _mapper.Map<List<DutyGetDto>>(accessDutiesList);
+            result.SetData(dutyDto);
+        }
+        catch (ValidationException e)
+        {
+            result.Fail(e);
+        }
+        catch (Exception e)
+        {
+            result.Fail(new ErrorMessage("DUTY-212122", e.Message));
         }
 
         return result;
     }
 
-    #endregion
-
-    //tamam
-
-    #region GetByTitle
-
-    public async Task<ServiceCollectionResult<DutyGetDto?>> GetByTitleAsync(string title)
+    public async Task<ServiceCollectionResult<DutyGetDto?>> GetByManagerIdAsync(Guid managerId, DutySortOptions? dutySortOptions)
     {
         var result = new ServiceCollectionResult<DutyGetDto?>();
 
         try
         {
-            if (!AuthHelper.IsLoggedIn())
+            var projects = await _projectDal.GetAllAsync(p => p.ManagerId == managerId && p.IsDeleted == false);
+            var projectIds = projects.Select(p => p.Id).ToList();
+            var duties = await _dutyDal.GetAllAsync(d => projectIds.Contains(d.ProjectId) && d.IsDeleted == false);
+            var accessDuties = duties;
+            
+            var accessDutiesList = accessDuties.ToList();
+            // Apply sorting
+            accessDutiesList = dutySortOptions switch
             {
-                result.Fail(new ErrorMessage("DUTY-212122", "User is not logged in"));
-                return result;
-            }
-
-            var loggedInUserId = AuthHelper.GetUserId().Value;
-
-            var duties = await _dutyDal.GetAllAsync(d => d.Title == title && d.IsDeleted == false &&
-                                                         ((d.ReporterId == loggedInUserId &&
-                                                           d.ReporterId == loggedInUserId) ||
-                                                          d.Project.ManagerId == loggedInUserId ||
-                                                          d.AssignedUsers.Any(u => u.Id == loggedInUserId)));
-            var dutyDto = _mapper.Map<List<DutyGetDto>>(duties);
+                DutySortOptions.Title => accessDutiesList.OrderBy(d => d.Title).ToList(),
+                DutySortOptions.Priority => accessDutiesList.OrderBy(d => d.Priority).ToList(),
+                DutySortOptions.Status => accessDutiesList.OrderBy(d => d.Status).ToList(),
+                DutySortOptions.DueDate => accessDutiesList.OrderBy(d => d.DueDate).ToList(),
+                DutySortOptions.Assignee => accessDutiesList.OrderBy(d => d.AssignedUsers?.Count ?? 0).ToList(),
+                DutySortOptions.Reporter => accessDutiesList.OrderBy(d => d.ReporterId).ToList(),
+                _ => accessDutiesList
+            };
+            
+            var dutyDto = _mapper.Map<List<DutyGetDto>>(accessDutiesList);
             result.SetData(dutyDto);
         }
         catch (ValidationException e)
@@ -237,291 +299,100 @@ public class DutyManager //: IDutyService
     }
 
     #endregion
+    
+    #region GetByTitle
+    public async Task<ServiceObjectResult<DutyGetDto?>> GetByTitleAsync(string title)
+    {
+        var result = new ServiceObjectResult<DutyGetDto?>();
 
-    //tamam
+        try
+        {
+            var duty = await _dutyDal.GetAsync(d => d.Title == title && d.IsDeleted == false);
 
+            if (duty == null)
+            {
+                result.Fail(new ErrorMessage("DUTY-432894", "Duty not found"));
+                return result;
+            }
+
+            var loggedInUserId = AuthHelper.GetUserId();        
+            var hasAccess = false;
+
+            if (AuthHelper.GetRole()!.Equals(UserRoles.Admin))
+            {
+                hasAccess = true;
+            }
+            else
+            {
+                var dutyAccesses = await _dutyAccessDal.GetAllAsync(x => x.IsDeleted == false && x.DutyId == duty.Id);
+                var teamProjects = dutyAccesses.Select(x => x.TeamProject).ToList();
+                var teamIds = teamProjects.Select(x => x.TeamId).ToList();
+
+                foreach (var teamId in teamIds)
+                {
+                    var userTeams = await _userTeamDal.GetAllAsync(x =>
+                        x.UserId == loggedInUserId && x.IsDeleted == false && x.TeamId == teamId);
+                    if (userTeams.Count <= 0) continue;
+                    hasAccess = true;
+                    break;
+                }
+                
+            }
+            
+            if (!hasAccess)
+            {
+                result.Fail(new ErrorMessage("DUTY-432894", "Access denied"));
+                return result;
+            }
+            
+            var dutyDto = _mapper.Map<DutyGetDto>(duty);
+            result.SetData(dutyDto);
+        }
+        catch (ValidationException e)
+        {
+            result.Fail(e);
+        }
+        catch (Exception e)
+        {
+            result.Fail(new ErrorMessage("PRJM-567953", e.Message));
+        }
+
+        return result;
+    }
+    #endregion
+    
     #region GetByProjectId
-
     public async Task<ServiceCollectionResult<DutyGetDto?>> GetByProjectIdAsync(Guid projectId)
     {
         var result = new ServiceCollectionResult<DutyGetDto?>();
 
         try
         {
-            if (!AuthHelper.IsLoggedIn())
-            {
-                result.Fail(new ErrorMessage("DUTY-212122", "User is not logged in"));
-                return result;
-            }
-
-            var loggedInUserId = AuthHelper.GetUserId().Value;
-
-            var duties = await _dutyDal.GetAllAsync(d => d.ProjectId == projectId && d.IsDeleted == false &&
-                                                         ((d.ReporterId == loggedInUserId &&
-                                                           d.ReporterId == loggedInUserId) ||
-                                                          d.Project.ManagerId == loggedInUserId ||
-                                                          d.AssignedUsers.Any(u => u.Id == loggedInUserId)));
-            var dutyDto = _mapper.Map<List<DutyGetDto>>(duties);
-            result.SetData(dutyDto);
-        }
-        catch (ValidationException e)
-        {
-            result.Fail(e);
-        }
-        catch (Exception e)
-        {
-            result.Fail(new ErrorMessage("DUTY-212122", e.Message));
-        }
-
-        return result;
-    }
-
-    #endregion
-
-    //tamam
-
-    #region GetByStatus
-
-    public async Task<ServiceCollectionResult<DutyGetDto?>> GetByStatusAsync(DutyStatus status)
-    {
-        var result = new ServiceCollectionResult<DutyGetDto?>();
-
-        try
-        {
-            if (!AuthHelper.IsLoggedIn())
-            {
-                result.Fail(new ErrorMessage("DUTY-212122", "User is not logged in"));
-                return result;
-            }
-
-            var loggedInUserId = AuthHelper.GetUserId().Value;
-
-            var duties = await _dutyDal.GetAllAsync(d => d.Status == status && d.IsDeleted == false &&
-                                                         ((d.ReporterId == loggedInUserId &&
-                                                           d.ReporterId == loggedInUserId) ||
-                                                          d.Project.ManagerId == loggedInUserId ||
-                                                          d.AssignedUsers.Any(u => u.Id == loggedInUserId)));
-            var dutyDto = _mapper.Map<List<DutyGetDto>>(duties);
-            result.SetData(dutyDto);
-        }
-        catch (ValidationException e)
-        {
-            result.Fail(e);
-        }
-        catch (Exception e)
-        {
-            result.Fail(new ErrorMessage("DUTY-212122", e.Message));
-        }
-
-        return result;
-    }
-
-    #endregion
-
-    //tamam
-
-    #region GetByPriority
-
-    public async Task<ServiceCollectionResult<DutyGetDto?>> GetByPriorityAsync(Priority priority)
-    {
-        var result = new ServiceCollectionResult<DutyGetDto?>();
-
-        try
-        {
-            if (!AuthHelper.IsLoggedIn())
-            {
-                result.Fail(new ErrorMessage("DUTY-212122", "User is not logged in"));
-                return result;
-            }
-
-            var loggedInUserId = AuthHelper.GetUserId().Value;
-
-            var duties = await _dutyDal.GetAllAsync(d => d.Priority == priority && d.IsDeleted == false &&
-                                                         ((d.ReporterId == loggedInUserId &&
-                                                           d.ReporterId == loggedInUserId) ||
-                                                          d.Project.ManagerId == loggedInUserId ||
-                                                          d.AssignedUsers.Any(u => u.Id == loggedInUserId)));
-            var dutyDto = _mapper.Map<List<DutyGetDto>>(duties);
-            result.SetData(dutyDto);
-        }
-        catch (ValidationException e)
-        {
-            result.Fail(e);
-        }
-        catch (Exception e)
-        {
-            result.Fail(new ErrorMessage("DUTY-212122", e.Message));
-        }
-
-        return result;
-    }
-
-    #endregion
-
-    //tamam
-
-    #region GetByReporterId
-
-    public async Task<ServiceCollectionResult<DutyGetDto?>> GetByReporterIdAsync(Guid reporterId)
-    {
-        var result = new ServiceCollectionResult<DutyGetDto?>();
-
-        try
-        {
-            if (!AuthHelper.IsLoggedIn())
-            {
-                result.Fail(new ErrorMessage("DUTY-212122", "User is not logged in"));
-                return result;
-            }
-
-            var loggedInUserId = AuthHelper.GetUserId().Value;
-
-            var duties = await _dutyDal.GetAllAsync(d => d.ReporterId == reporterId && d.IsDeleted == false &&
-                                                         ((d.ReporterId == loggedInUserId &&
-                                                           d.ReporterId == loggedInUserId) ||
-                                                          d.Project.ManagerId == loggedInUserId ||
-                                                          d.AssignedUsers.Any(u => u.Id == loggedInUserId)));
-            var dutyDto = _mapper.Map<List<DutyGetDto>>(duties);
-            result.SetData(dutyDto);
-        }
-        catch (ValidationException e)
-        {
-            result.Fail(e);
-        }
-        catch (Exception e)
-        {
-            result.Fail(new ErrorMessage("DUTY-212122", e.Message));
-        }
-
-        return result;
-    }
-
-    #endregion
-
-    //tamam
-
-    #region GetByAssigneeId
-
-    public async Task<ServiceCollectionResult<DutyGetDto?>> GetByAssigneeIdAsync(Guid assigneeId)
-    {
-        var result = new ServiceCollectionResult<DutyGetDto?>();
-
-        try
-        {
-            if (!AuthHelper.IsLoggedIn())
-            {
-                result.Fail(new ErrorMessage("DUTY-212122", "User is not logged in"));
-                return result;
-            }
-
-            var loggedInUserId = AuthHelper.GetUserId().Value;
-
-            var duties = await _dutyDal.GetAllAsync(d =>
-                d.AssignedUsers.Any(u => u.Id == assigneeId) && d.IsDeleted == false &&
-                ((d.ReporterId == loggedInUserId && d.ReporterId == loggedInUserId) ||
-                 d.Project.ManagerId == loggedInUserId ||
-                 d.AssignedUsers.Any(u => u.Id == loggedInUserId)));
-            var dutyDto = _mapper.Map<List<DutyGetDto>>(duties);
-            result.SetData(dutyDto);
-        }
-        catch (ValidationException e)
-        {
-            result.Fail(e);
-        }
-        catch (Exception e)
-        {
-            result.Fail(new ErrorMessage("DUTY-212122", e.Message));
-        }
-
-        return result;
-    }
-
-    #endregion
-
-    //tamam <3
-
-    #region GetByDutyType
-
-    public async Task<ServiceCollectionResult<DutyGetDto?>> GetByDutyTypeAsync(DutyType dutyType)
-    {
-        var result = new ServiceCollectionResult<DutyGetDto?>();
-
-        try
-        {
-            if (!AuthHelper.IsLoggedIn())
-            {
-                result.Fail(new ErrorMessage("DUTY-212122", "User is not logged in"));
-                return result;
-            }
-
-            var loggedInUserId = AuthHelper.GetUserId().Value;
-
-            var duties = await _dutyDal.GetAllAsync(d => d.DutyType == dutyType && d.IsDeleted == false &&
-                                                         ((d.ReporterId == loggedInUserId &&
-                                                           d.ReporterId == loggedInUserId) ||
-                                                          d.Project.ManagerId == loggedInUserId ||
-                                                          d.AssignedUsers.Any(u => u.Id == loggedInUserId)));
-            var dutyDto = _mapper.Map<List<DutyGetDto>>(duties);
-            result.SetData(dutyDto);
-        }
-        catch (ValidationException e)
-        {
-            result.Fail(e);
-        }
-        catch (Exception e)
-        {
-            result.Fail(new ErrorMessage("DUTY-212122", e.Message));
-        }
-
-        return result;
-    }
-
-    #endregion
-
-    //tamam
-
-    #region RemoveDutyFromProject
-    public async Task<ServiceObjectResult<bool>> RemoveDutyFromProjectAsync(RemoveDutyFromProjectDto removeDutyFromProjectDto)
-    {
-        var result = new ServiceObjectResult<bool>();
-
-        try
-        {
-            if (!AuthHelper.IsLoggedIn())
-            {
-                result.Fail(new ErrorMessage("DUTY-537954", "User is not logged in"));
-                return result;
-            }
-
-            var project = await _projectDal.GetAsync(p => p.Id == removeDutyFromProjectDto.ProjectId && p.IsDeleted == false);
-            var duty = await _dutyDal.GetAsync(d => d.Id == removeDutyFromProjectDto.DutyId && d.IsDeleted == false);
-
+            var loggedInUserId = AuthHelper.GetUserId()!.Value;
+            
+            // If logged in user id is not admin or pm set hasAccess to false
+            var project = await _projectDal.GetAsync(x => x.Id == projectId && x.IsDeleted == false);
+            
             if (project == null)
             {
-                result.Fail(new ErrorMessage("DUTY-537954", "Project not found"));
+                result.Fail(new ErrorMessage("DUTY-432894", "Project not found"));
                 return result;
             }
-
-            if (duty == null)
+            
+            if (!AuthHelper.GetRole()!.Equals(UserRoles.Admin) && project.ManagerId != loggedInUserId)
             {
-                result.Fail(new ErrorMessage("DUTY-537954", "Duty not found"));
+                result.Fail(new ErrorMessage("DUTY-432894", "Access denied"));
                 return result;
             }
-
-            var loggedInUserId = AuthHelper.GetUserId().Value;
-
-            if (project.ManagerId != loggedInUserId && duty.ReporterId != loggedInUserId)
-            {
-                result.Fail(new ErrorMessage("DUTY-537954",
-                    "You do not have access to remove this duty from the project"));
-                return result;
-            }
-
-            project.Duties.Remove(duty);
-            await _projectDal.UpdateAsync(project);
-
-            result.SetData(true);
-            result.Success("Duty removed from project successfully");
+            
+            var teamProjects = await _teamProjectDal.GetAllAsync(x => x.ProjectId == projectId && x.IsDeleted == false);
+            var teamProjectsId = teamProjects.Select(x => x.Id).ToList();
+            var dutyAccesses = await _dutyAccessDal.GetAllAsync(x => x.IsDeleted == false && teamProjectsId.Contains(x.TeamProjectId));
+            var dutyIds = dutyAccesses.Select(x => x.DutyId).ToList();
+            var duties = await _dutyDal.GetAllAsync(x => dutyIds.Contains(x.Id) && x.IsDeleted == false);
+            
+            var dutyDto = _mapper.Map<List<DutyGetDto>>(duties);
+            result.SetData(dutyDto);
         }
         catch (ValidationException e)
         {
@@ -529,29 +400,204 @@ public class DutyManager //: IDutyService
         }
         catch (Exception e)
         {
-            result.Fail(new ErrorMessage("DUTY-537954", e.Message));
+            result.Fail(new ErrorMessage("DUTY-432894", e.Message));
+        }
+                                                         
+        return result;
+    }
+    #endregion
+    
+    #region GetByStatus
+    public async Task<ServiceCollectionResult<DutyGetDto?>> GetByStatusAsync(DutyStatus status,DutySortOptions? dutySortOptions)
+    {
+        var result = new ServiceCollectionResult<DutyGetDto?>();
+
+        try
+        {
+            var loggedInUserId = AuthHelper.GetUserId()!.Value;
+            var duties = await _dutyDal.GetAllAsync(d => d.Status == status && d.IsDeleted == false);
+            var accessDuties = new HashSet<Duty>();
+            
+            if(AuthHelper.GetRole()!.Equals(UserRoles.Admin))
+                accessDuties = duties.ToHashSet();
+            else
+            {
+                foreach (var duty in duties)
+                {
+                    var dutyAccesses = await _dutyAccessDal.GetAllAsync(x => x.IsDeleted == false && x.DutyId == duty.Id);
+                    var teamProjects = dutyAccesses.Select(x => x.TeamProject).ToList();
+                    var teamIds = teamProjects.Select(x => x.TeamId).ToList();
+
+                    foreach (var teamId in teamIds)
+                    {
+                        var userTeams = await _userTeamDal.GetAllAsync(x =>
+                            x.UserId == loggedInUserId && x.IsDeleted == false && x.TeamId == teamId);
+                        if (userTeams.Count <= 0) continue;
+                        accessDuties.Add(duty);
+                        break;
+                    }
+                }
+            }
+            
+            var accessDutiesList = accessDuties.ToList();
+            // Apply sorting
+            accessDutiesList = dutySortOptions switch
+            {
+                DutySortOptions.Title => accessDutiesList.OrderBy(d => d.Title).ToList(),
+                DutySortOptions.Priority => accessDutiesList.OrderBy(d => d.Priority).ToList(),
+                DutySortOptions.Status => accessDutiesList.OrderBy(d => d.Status).ToList(),
+                DutySortOptions.DueDate => accessDutiesList.OrderBy(d => d.DueDate).ToList(),
+                DutySortOptions.Assignee => accessDutiesList.OrderBy(d => d.AssignedUsers?.Count ?? 0).ToList(),
+                DutySortOptions.Reporter => accessDutiesList.OrderBy(d => d.ReporterId).ToList(),
+                _ => accessDutiesList
+            };
+            
+            var dutyDto = _mapper.Map<List<DutyGetDto>>(accessDutiesList);
+            result.SetData(dutyDto);
+        }
+        catch (ValidationException e)
+        {
+            result.Fail(e);
+        }
+        catch (Exception e)
+        {
+            result.Fail(new ErrorMessage("DUTY-212122", e.Message));
         }
 
         return result;
     }
-
     #endregion
 
-    //tamam
+    #region GetByPriority
+    public async Task<ServiceCollectionResult<DutyGetDto?>> GetByPriorityAsync(Priority priority,DutySortOptions? dutySortOptions)
+    {
+        var result = new ServiceCollectionResult<DutyGetDto?>();
+
+        try
+        {
+            var loggedInUserId = AuthHelper.GetUserId()!.Value;
+            var duties = await _dutyDal.GetAllAsync(d => d.Priority == priority && d.IsDeleted == false);
+            var accessDuties = new HashSet<Duty>();
+            
+            if(AuthHelper.GetRole()!.Equals(UserRoles.Admin))
+                accessDuties = duties.ToHashSet();
+            else
+            {
+                foreach (var duty in duties)
+                {
+                    var dutyAccesses = await _dutyAccessDal.GetAllAsync(x => x.IsDeleted == false && x.DutyId == duty.Id);
+                    var teamProjects = dutyAccesses.Select(x => x.TeamProject).ToList();
+                    var teamIds = teamProjects.Select(x => x.TeamId).ToList();
+
+                    foreach (var teamId in teamIds)
+                    {
+                        var userTeams = await _userTeamDal.GetAllAsync(x =>
+                            x.UserId == loggedInUserId && x.IsDeleted == false && x.TeamId == teamId);
+                        if (userTeams.Count <= 0) continue;
+                        accessDuties.Add(duty);
+                        break;
+                    }
+                }
+            }
+            
+            var accessDutiesList = accessDuties.ToList();
+            // Apply sorting
+            accessDutiesList = dutySortOptions switch
+            {
+                DutySortOptions.Title => accessDutiesList.OrderBy(d => d.Title).ToList(),
+                DutySortOptions.Priority => accessDutiesList.OrderBy(d => d.Priority).ToList(),
+                DutySortOptions.Status => accessDutiesList.OrderBy(d => d.Status).ToList(),
+                DutySortOptions.DueDate => accessDutiesList.OrderBy(d => d.DueDate).ToList(),
+                DutySortOptions.Assignee => accessDutiesList.OrderBy(d => d.AssignedUsers?.Count ?? 0).ToList(),
+                DutySortOptions.Reporter => accessDutiesList.OrderBy(d => d.ReporterId).ToList(),
+                _ => accessDutiesList
+            };
+            
+            var dutyDto = _mapper.Map<List<DutyGetDto>>(accessDutiesList);
+            result.SetData(dutyDto);
+        }
+        catch (ValidationException e)
+        {
+            result.Fail(e);
+        }
+        catch (Exception e)
+        {
+            result.Fail(new ErrorMessage("DUTY-212122", e.Message));
+        }
+
+        return result;
+    }
+    #endregion
+
+    #region GetByDutyType
+    public async Task<ServiceCollectionResult<DutyGetDto?>> GetByDutyTypeAsync(DutyType dutyType,DutySortOptions? dutySortOptions)
+    {
+        var result = new ServiceCollectionResult<DutyGetDto?>();
+
+        try
+        {
+            var loggedInUserId = AuthHelper.GetUserId()!.Value;
+            var duties = await _dutyDal.GetAllAsync(d => d.DutyType == dutyType && d.IsDeleted == false);
+            var accessDuties = new HashSet<Duty>();
+            
+            if(AuthHelper.GetRole()!.Equals(UserRoles.Admin))
+                accessDuties = duties.ToHashSet();
+            else
+            {
+                foreach (var duty in duties)
+                {
+                    var dutyAccesses = await _dutyAccessDal.GetAllAsync(x => x.IsDeleted == false && x.DutyId == duty.Id);
+                    var teamProjects = dutyAccesses.Select(x => x.TeamProject).ToList();
+                    var teamIds = teamProjects.Select(x => x.TeamId).ToList();
+
+                    foreach (var teamId in teamIds)
+                    {
+                        var userTeams = await _userTeamDal.GetAllAsync(x =>
+                            x.UserId == loggedInUserId && x.IsDeleted == false && x.TeamId == teamId);
+                        if (userTeams.Count <= 0) continue;
+                        accessDuties.Add(duty);
+                        break;
+                    }
+                }
+            }
+            
+            var accessDutiesList = accessDuties.ToList();
+            // Apply sorting
+            accessDutiesList = dutySortOptions switch
+            {
+                DutySortOptions.Title => accessDutiesList.OrderBy(d => d.Title).ToList(),
+                DutySortOptions.Priority => accessDutiesList.OrderBy(d => d.Priority).ToList(),
+                DutySortOptions.Status => accessDutiesList.OrderBy(d => d.Status).ToList(),
+                DutySortOptions.DueDate => accessDutiesList.OrderBy(d => d.DueDate).ToList(),
+                DutySortOptions.Assignee => accessDutiesList.OrderBy(d => d.AssignedUsers?.Count ?? 0).ToList(),
+                DutySortOptions.Reporter => accessDutiesList.OrderBy(d => d.ReporterId).ToList(),
+                _ => accessDutiesList
+            };
+            
+            var dutyDto = _mapper.Map<List<DutyGetDto>>(accessDutiesList);
+            result.SetData(dutyDto);
+        }
+        catch (ValidationException e)
+        {
+            result.Fail(e);
+        }
+        catch (Exception e)
+        {
+            result.Fail(new ErrorMessage("DUTY-212122", e.Message));
+        }
+
+        return result;
+    }
+    #endregion
 
     #region Update
 
-    public async Task<ServiceObjectResult<DutyGetDto?>> UpdateAsync(DutyUpdateDto dutyUpdateDto)
+    public async Task<ServiceObjectResult<DutyGetDto>> UpdateAsync(DutyUpdateDto dutyUpdateDto)
     {
         var result = new ServiceObjectResult<DutyGetDto?>();
 
         try
         {
-            if (!AuthHelper.IsLoggedIn())
-            {
-                result.Fail(new ErrorMessage("DUTY-123456", "User is not logged in"));
-                return result;
-            }
 
             var duty = await _dutyDal.GetAsync(u => u.Id == dutyUpdateDto.Id && u.IsDeleted == false);
 
@@ -560,20 +606,10 @@ public class DutyManager //: IDutyService
                 result.Fail(new ErrorMessage("DUTY-123456", "Duty not found"));
                 return result;
             }
-
-            // Get the logged in user's id
-            var loggedInUserId = AuthHelper.GetUserId().Value;
-
+            
             // Get the project
             var project = await _projectDal.GetAsync(p => p.Id == duty.ProjectId);
-
-            // Check if the logged in user is the project manager or the reporter of the duty
-            if (duty.ReporterId != loggedInUserId && project.ManagerId != loggedInUserId)
-            {
-                result.Fail(new ErrorMessage("DUTY-123456", "You do not have access to update this duty"));
-                return result;
-            }
-
+            
             // Map the dutyUpdateDto to the existing duty
             _mapper.Map(dutyUpdateDto, duty);
 
@@ -600,8 +636,6 @@ public class DutyManager //: IDutyService
 
     #endregion
 
-    //tamam
-
     #region Create
 
     public async Task<ServiceObjectResult<DutyGetDto>> CreateAsync(DutyCreateDto dutyCreateDto)
@@ -610,14 +644,7 @@ public class DutyManager //: IDutyService
 
         try
         {
-            // Check if the user is logged in
-            if (!AuthHelper.IsLoggedIn())
-            {
-                result.Fail(new ErrorMessage("DUTY-453356", "User is not logged in"));
-                return result;
-            }
-
-            // Get the project
+            
             var project = await _projectDal.GetAsync(p => p.Id == dutyCreateDto.ProjectId);
 
             // Check if the project exists
@@ -626,20 +653,7 @@ public class DutyManager //: IDutyService
                 result.Fail(new ErrorMessage("DUTY-453356", "Project not found"));
                 return result;
             }
-
-            // Get the logged in user's id
-            var loggedInUserId = AuthHelper.GetUserId().Value;
-
-            // TODO: Ador bey lütfen buna bakiniz <3
-            // Check if the logged in user is a member of the project
-            /*
-            if (project.Users.All(m => m.Id != loggedInUserId))
-            {
-                result.Fail(new ErrorMessage("DUTY-453356", "You are not a member of this project"));
-                return result;
-            }*/
-
-            // Map the dutyCreateDto to a Duty entity
+            
             var duty = _mapper.Map<Duty>(dutyCreateDto);
 
             // Add the duty to the database
@@ -676,25 +690,12 @@ public class DutyManager //: IDutyService
 
         try
         {
-            if (!AuthHelper.IsLoggedIn())
-            {
-                result.Fail(new ErrorMessage("DUTY-537955", "User is not logged in"));
-                return result;
-            }
 
             var duty = await _dutyDal.GetAsync(d => d.Id == id && d.IsDeleted == false);
 
             if (duty == null)
             {
                 result.Fail(new ErrorMessage("DUTY-537955", "Duty not found"));
-                return result;
-            }
-
-            var loggedInUserId = AuthHelper.GetUserId().Value;
-
-            if (duty.ReporterId != loggedInUserId && duty.Project.ManagerId != loggedInUserId)
-            {
-                result.Fail(new ErrorMessage("DUTY-537955", "You do not have access to delete this duty"));
                 return result;
             }
 

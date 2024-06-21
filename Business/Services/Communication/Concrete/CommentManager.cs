@@ -14,7 +14,6 @@ using DataAccess.Repositories.Abstract.TaskManagement;
 using DataAccess.Repositories.Abstract.UserManagement;
 using Domain.DTOs.Communication;
 using Domain.Entities.Communication;
-using Microsoft.EntityFrameworkCore;
 
 namespace Business.Services.Communication.Concrete;
 
@@ -46,6 +45,7 @@ public class CommentManager : ICommentService
             }
             else
             {
+                /*
                 var loggedInUserId = AuthHelper.GetUserId()!.Value;
                 var userTeams = await _userTeamDal.GetAllAsync(x => x.UserId == loggedInUserId && x.IsDeleted == false);
                 var allTeamProjects = await _teamProjectDal.GetAllAsync(x => x.IsDeleted == false);
@@ -63,7 +63,7 @@ public class CommentManager : ICommentService
                     foreach (var comment in xComments)
                         accessComments.Add(comment);
                 }
-                
+                */
             }
             
             
@@ -201,6 +201,7 @@ public class CommentManager : ICommentService
 
     #region Update
 
+    // TODO: Yanlış
     public async Task<ServiceObjectResult<CommentGetDto?>> UpdateAsync(CommentUpdateDto commentUpdateDto)
     {
         var result = new ServiceObjectResult<CommentGetDto?>();
